@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quickdraw showdown</title>
+<meta name="description" content="Bet DRAW one on one. Post a challenge, anyone can take it with the same amount, and three blocks later the chain names the winner. The winner takes 1.8 times the bet and 10% of the pot burns.">
+<meta property="og:title" content="Quickdraw showdown">
+<meta property="og:description" content="Bet DRAW one on one. The winner takes 1.8 times the bet and 10% of the pot burns.">
+<meta property="og:image" content="https://quickdrawprotocol.xyz/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://quickdrawprotocol.xyz/og.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23B23A1B'/%3E%3Crect x='6' y='13' width='14' height='6' fill='%23EFE4CB'/%3E%3Crect x='18' y='9' width='4' height='4' fill='%23EFE4CB'/%3E%3Crect x='8' y='19' width='4' height='6' fill='%23EFE4CB'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFE4CB; --paper-2:#E4D4B0; --ink:#1C1611; --ink-2:#5C4E3F; --rust:#B23A1B; --sand:#D4BB8B;
+  --rule:rgba(28,22,17,.28); --rule-soft:rgba(28,22,17,.14);
+  --display:'Rye', 'Georgia', serif; --body:'Lora', 'Georgia', serif; --mono:'IBM Plex Mono', ui-monospace, 'Consolas', monospace;
+  --ease-out:cubic-bezier(.23,1,.32,1);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.01em;line-height:1.05;margin:0}
+h1{font-size:clamp(2.2rem,4.4vw,3.6rem)}
+h2{font-size:clamp(1.6rem,3vw,2.3rem)}
+h3{font-size:1.15rem;line-height:1.3}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+@media(min-width:768px){.wrap{padding:0 32px}}
+.kicker{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rust)}
+.muted{color:var(--ink-2)}
+.mono{font-family:var(--mono)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+[hidden]{display:none !important}
+
+/* masthead */
+header{border-bottom:2px solid var(--ink)}
+.mast{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+.wordmark{font-family:var(--display);font-size:1.45rem;text-decoration:none;letter-spacing:.01em}
+.wordmark span{color:var(--rust)}
+nav.desk{display:none;gap:4px;align-items:center}
+nav a,nav button,.btn{font-family:var(--mono);font-size:.84rem;letter-spacing:.04em;text-decoration:none;padding:10px 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:none;color:var(--ink);cursor:pointer;border-radius:3px}
+nav a[aria-current="page"]{text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:2px}
+@media(hover:hover) and (pointer:fine){nav a:hover,nav button:hover{background:var(--paper-2)}}
+.btn{border:2px solid var(--ink);transition:transform 160ms var(--ease-out),background-color 160ms ease,color 160ms ease}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+@media(hover:hover) and (pointer:fine){.btn.primary:hover{background:var(--rust);border-color:var(--rust)}}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+details.menu{position:relative}
+details.menu summary{list-style:none;font-family:var(--mono);font-size:.84rem;padding:10px 14px;min-height:44px;display:inline-flex;align-items:center;border:2px solid var(--ink);border-radius:3px;cursor:pointer}
+details.menu summary::-webkit-details-marker{display:none}
+details.menu .sheet{position:absolute;right:0;top:calc(100% + 8px);background:var(--paper);border:2px solid var(--ink);padding:8px;display:flex;flex-direction:column;min-width:200px;z-index:20}
+details.menu .sheet a,details.menu .sheet button{justify-content:flex-start;width:100%}
+@media(min-width:768px){nav.desk{display:flex}details.menu{display:none}}
+
+/* hero */
+.hero{padding:40px 0 32px;display:grid;gap:26px}
+@media(min-width:1024px){.hero{grid-template-columns:5fr 7fr;gap:48px;padding:60px 0 48px;align-items:center}}
+.hero p.lede{font-size:1.12rem;max-width:33em;margin-top:16px}
+.scene{border:3px solid var(--ink);background:var(--sand);position:relative}
+canvas#scene{display:block;width:100%;height:clamp(250px,40vw,430px);touch-action:manipulation}
+.scene-cap{display:grid;gap:4px;padding:10px 0 0;font-size:.93rem}
+@media(min-width:768px){.scene-cap{grid-template-columns:1fr auto;align-items:baseline;gap:16px}}
+#cap{min-height:1.6em}
+#tally{font-family:var(--mono);font-size:.78rem;color:var(--ink-2)}
+
+section{padding:36px 0}
+@media(min-width:768px){section{padding:52px 0}}
+hr.rule{border:0;border-top:2px solid var(--ink);margin:0}
+.sec-head{display:grid;gap:10px;margin-bottom:20px}
+@media(min-width:768px){.sec-head{grid-template-columns:1fr 1fr;align-items:end}}
+.sec-head p{max-width:36em}
+
+/* the table and the form */
+.desk-grid{display:grid;gap:28px}
+@media(min-width:1024px){.desk-grid{grid-template-columns:5fr 7fr;gap:44px;align-items:start}}
+.post{border:3px double var(--ink);background:var(--paper-2);padding:18px 18px 16px;position:relative}
+.post:before{content:"";position:absolute;inset:5px;border:1px solid var(--rule);pointer-events:none}
+.post h3{font-family:var(--display);font-size:1.45rem;margin-bottom:12px}
+.post label{display:block;font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-bottom:6px}
+.amt{display:flex;gap:8px}
+.amt input{flex:1;min-width:0;font-family:var(--mono);font-size:1.15rem;padding:10px 12px;min-height:48px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:3px;font-variant-numeric:tabular-nums}
+.amt input:focus-visible{outline:2px solid var(--rust);outline-offset:2px}
+.amt .btn{min-width:64px}
+.calc{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:14px 0 4px;font-size:.95rem}
+.calc span:nth-child(even){font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.warn{border-left:3px solid var(--rust);padding:6px 0 6px 10px;margin-top:12px;font-size:.92rem}
+.post .go{width:100%;margin-top:14px;min-height:50px;font-size:.92rem}
+.status{font-size:.88rem;color:var(--ink-2);margin-top:10px;min-height:1.4em}
+.status a{color:var(--rust)}
+.wallet-line{font-size:.9rem;color:var(--ink-2);margin-top:10px}
+
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:left;font-family:var(--mono);font-weight:600;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);padding:6px 8px 8px 0;border-bottom:2px solid var(--ink);white-space:nowrap}
+td{padding:6px 8px 6px 0;border-bottom:1px solid var(--rule-soft);vertical-align:middle}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+td.a{text-align:right;padding-right:0}
+td.a .btn{min-width:96px}
+tr.you td{background:rgba(178,58,27,.07)}
+td.n+td,th.n+th{padding-left:16px}
+@media(max-width:639px){
+  table.cards thead{display:none}
+  table.cards tr{display:grid;grid-template-columns:1fr auto;column-gap:12px;padding:10px 0;border-bottom:1px solid var(--rule-soft);align-items:center}
+  table.cards tr.you{background:rgba(178,58,27,.07)}
+  table.cards td{border:0;padding:1px 0;text-align:left;background:none;grid-column:1}
+  table.cards td.n+td{padding-left:0}
+  table.cards td.a{grid-column:2;grid-row:1 / span 5;align-self:center}
+  table.cards td[data-l]:before{content:attr(data-l);display:inline-block;min-width:9.5em;font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+}
+.tbl-wrap{overflow-x:auto}
+.empty{padding:16px 0;color:var(--ink-2);border-bottom:1px solid var(--rule-soft)}
+.state{font-family:var(--mono);font-size:.8rem}
+.state.won{color:var(--rust)}
+.subhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:26px 0 8px}
+.subhead:first-child{margin-top:0}
+#mine-box{margin-top:26px}
+.subhead h3{font-size:1.3rem}
+.subhead small{font-family:var(--mono);font-size:.76rem;color:var(--ink-2)}
+
+/* rules */
+.grid{display:grid;gap:22px}
+@media(min-width:1024px){.grid{grid-template-columns:4fr 8fr;gap:48px}}
+.grid .lhs p{margin-top:10px}
+.items{display:grid;border-top:1px solid var(--rule)}
+.item{display:grid;gap:4px;padding:15px 0;border-bottom:1px solid var(--rule-soft)}
+@media(min-width:768px){.item{grid-template-columns:150px 1fr;gap:18px}}
+.item .v{font-family:var(--display);font-size:1.35rem;line-height:1.2}
+.item h3{margin-bottom:2px}
+.item p{font-size:.97rem}
+code.seed{display:block;font-family:var(--mono);font-size:.82rem;background:var(--paper-2);border:1px solid var(--rule);padding:10px 12px;margin-top:8px;overflow-wrap:anywhere}
+.hero>*,.desk-grid>*,.grid>*,.item>*{min-width:0}
+
+footer{border-top:2px solid var(--ink);padding:28px 0 40px;font-size:.9rem;color:var(--ink-2)}
+footer .mono{word-break:break-all}
+@media(prefers-reduced-motion:reduce){.btn{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap mast">
+    <a class="wordmark" href="/">QUICK<span>DRAW</span></a>
+    <nav class="desk" aria-label="Site">
+      <a href="/">The street</a>
+      <a href="/duel" aria-current="page">Showdown</a>
+      <a href="/rules">Rules</a>
+      <button id="connect" class="btn primary" type="button">Connect wallet</button>
+    </nav>
+    <details class="menu">
+      <summary aria-label="Open menu">Menu</summary>
+      <div class="sheet">
+        <a href="/">The street</a>
+        <a href="/duel" aria-current="page">Showdown</a>
+        <a href="/rules">Rules</a>
+        <button id="connect-m" type="button">Connect wallet</button>
+      </div>
+    </details>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <span class="kicker">One on one</span>
+      <h1 style="margin-top:14px">Put DRAW on the table. One shot settles it.</h1>
+      <p class="lede">Post a bet and wait. Anyone can take it with the same amount. Three blocks later the chain names the winner, who walks away with 1.8 times the bet. The other 10% of the pot burns.</p>
+    </div>
+    <div>
+      <div class="scene"><canvas id="scene" aria-label="Two gunslingers face off on the street"></canvas></div>
+      <div class="scene-cap"><div id="cap" aria-live="polite"></div><div id="tally"></div></div>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+<section id="table">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="kicker">The table</span><h2 style="margin-top:8px">Post a challenge or take one</h2></div>
+      <p class="muted">Both sides bet the same. A challenge stays open until someone takes it or you cancel it. Once taken, nobody can back out.</p>
+    </div>
+    <div class="desk-grid">
+      <div class="post">
+        <h3>Post a challenge</h3>
+        <label for="amt">Your bet in DRAW</label>
+        <div class="amt"><input id="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="100" aria-describedby="calc"><button id="max" class="btn" type="button">Max</button></div>
+        <div class="calc" id="calc"><span>If you win</span><span id="c-win">180 DRAW</span><span>Burned either way</span><span id="c-burn">20 DRAW</span></div>
+        <div class="warn" id="warn" hidden></div>
+        <button id="post" class="btn primary go" type="button" disabled>Post challenge</button>
+        <div class="status" id="post-status" aria-live="polite"></div>
+        <div class="wallet-line" id="wallet-line">Connect a wallet on Base to bet.</div>
+      </div>
+      <div>
+        <div class="subhead"><h3>Open challenges</h3><small id="open-n"></small></div>
+        <div class="tbl-wrap"><table class="cards">
+          <thead><tr><th>Challenger</th><th class="n">Bet</th><th class="n">Winner gets</th><th class="n">Posted</th><th></th></tr></thead>
+          <tbody id="open-rows"></tbody>
+        </table></div>
+        <div class="empty" id="open-empty">No open challenges. Post the first one.</div>
+
+        <div class="subhead"><h3>In the street now</h3><small id="live-n"></small></div>
+        <div class="tbl-wrap"><table class="cards">
+          <thead><tr><th>Challenger</th><th>Taker</th><th class="n">Bet</th><th>State</th><th></th></tr></thead>
+          <tbody id="live-rows"></tbody>
+        </table></div>
+        <div class="empty" id="live-empty">Nobody is facing off right now.</div>
+
+        <div class="subhead"><h3>Last results</h3><small></small></div>
+        <div class="tbl-wrap"><table class="cards">
+          <thead><tr><th>Winner</th><th>Loser</th><th class="n">Paid</th><th class="n">Burned</th><th></th></tr></thead>
+          <tbody id="done-rows"></tbody>
+        </table></div>
+        <div class="empty" id="done-empty">No duel has been settled yet.</div>
+
+        <div id="mine-box" hidden>
+          <div class="subhead"><h3>Your duels</h3><small id="mine-n"></small></div>
+          <div class="tbl-wrap"><table class="cards">
+            <thead><tr><th>Opponent</th><th class="n">Bet</th><th>Result</th></tr></thead>
+            <tbody id="mine-rows"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+<section id="rules">
+  <div class="wrap grid">
+    <div class="lhs"><span class="kicker">The rules</span><h2 style="margin-top:8px">Fixed in the contract</h2><p class="muted">The duel contract has no owner and no admin. Nobody can change these numbers, pause it or take a fee.</p></div>
+    <div class="items">
+      <div class="item"><div class="v">10 DRAW</div><div><h3>Smallest bet</h3><p>There is no largest. Both sides always bet the same amount.</p></div></div>
+      <div class="item"><div class="v">1.8x</div><div><h3>The payout</h3><p>The pot is both bets. The winner receives 90% of it, which is 1.8 times the bet. The other 10% burns and DRAW's supply shrinks.</p></div></div>
+      <div class="item"><div class="v">3 blocks</div><div><h3>Who wins</h3><p>The result comes from the hashes of the three blocks after the challenge is taken. Nobody knows them when it is taken. An odd seed means the challenger wins, an even seed means the taker wins.<code class="seed">seed = keccak256(hash(N+1), hash(N+2), hash(N+3), id, challenger, taker)</code></p></div></div>
+      <div class="item"><div class="v">8 seconds</div><div><h3>Settling</h3><p>Anyone can settle a duel once its three blocks exist. Our keeper does it within seconds. Settling only pays out a result that is already fixed.</p></div></div>
+      <div class="item"><div class="v">Cancel</div><div><h3>Changing your mind</h3><p>You can cancel your challenge and get the whole bet back while nobody has taken it. Once it is taken, nobody can cancel it.</p></div></div>
+      <div class="item"><div class="v">4.5 hours</div><div><h3>Void</h3><p>If nobody settles a duel for about 4.5 hours, its block hashes expire. The duel is then void and both players get their bet back in full.</p></div></div>
+      <div class="item"><div class="v">Your hand</div><div><h3>Betting moves DRAW out of your wallet</h3><p>Your hand on the street shrinks by the bet. At 5 DRAW or less it leaves the street, and ETH it won but did not claim passes to the other hands. Claim your ETH on the street page first. A win sends the payout back to your wallet and your hand grows again.</p></div></div>
+      <div class="item"><div class="v">Trust</div><div><h3>Who could tilt a result</h3><p>No player, keeper or team member can. Base's sequencer builds every block, so in theory it could shape the last of the three blocks. Mixing three blocks means no single earlier block decides anything.</p></div></div>
+      <div class="item"><div class="v">Approve</div><div><h3>Two wallet prompts</h3><p>The first time you bet, your wallet asks you to let the duel contract move that amount of DRAW, then to post or take the challenge. Never send DRAW straight to the contract. It only tracks bets made here and cannot return anything else.</p></div></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap" style="display:grid;gap:8px">
+    <div><b>Quickdraw</b>, a duel that lives inside the token. On Base.</div>
+    <div class="mono" id="foot-ca" hidden></div>
+    <div>Not financial advice. A duel is a coin flip. Only bet what you are fine losing.</div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   CONFIG. Set DUEL and TOKEN after launch to switch the page
+   to the live chain. Plain JSON-RPC, no dependencies.
+   ============================================================ */
+const CFG = {
+  DUEL: "",                // QuickdrawDuel
+  TOKEN: "",               // the DRAW token
+  GAME: "",                // the QuickdrawHook (the game): used for the won-ETH warning
+  RPCS: ["https://base-rpc.publicnode.com","https://mainnet.base.org","https://base.drpc.org"],
+  CHAIN_ID: 8453,
+  MIN_BET: 10, BURN_BPS: 1000, SAFE_FLOOR: 5,
+};
+const SEL = {
+  create:"0x780900dc", accept:"0x19b05f49", cancel:"0x40e58ee5", settle:"0x8df82800",
+  openDuels:"0xb77c4a9b", liveDuels:"0x0759109d", duelsOf:"0x720e408b", getDuels:"0x957d04a4",
+  duelCount:"0xbedfa46e", totalBurned:"0xd89135cd", totalSettled:"0xeace4c91", totalVolume:"0x5f81a57c",
+  ready:"0x6defbf80", outcome:"0x5a11492a", duelCountOf:"0x0ccdac1b",
+  approve:"0x095ea7b3", allowance:"0xdd62ed3e", balanceOf:"0x70a08231", handEth:"0xede83090",
+};
+const ERR = {
+  "0xd312a688":"The smallest bet is 10 DRAW.", "0xa117e0aa":"That bet is larger than all DRAW in existence.",
+  "0x78df7d31":"The duel table is not open yet.", "0x5d4cc6ca":"The duel table opens once both launch caps are lifted.",
+  "0xddafad98":"That challenge is no longer open. Someone took it or it was cancelled.", "0xbaf13b3f":"That duel is already settled.",
+  "0x93687c0b":"Only the challenger can cancel.", "0xfcc8c860":"You cannot take your own challenge.",
+  "0x085de625":"The three seed blocks do not all exist yet. Try again in a few seconds.",
+};
+const LIVE = !!(CFG.DUEL && CFG.TOKEN);
+const ONE = 10n**18n;
+const $ = s => document.querySelector(s);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const short = a => a.slice(0,6)+"..."+a.slice(-4);
+const pad32 = v => BigInt(v).toString(16).padStart(64,"0");
+const padAddr = a => a.toLowerCase().replace(/^0x/,"").padStart(64,"0");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---- amounts: DRAW has 18 decimals ---- */
+function fmtDraw(wei, dp=2){
+  const n = Number(wei) / 1e18;
+  return n.toLocaleString("en-US",{maximumFractionDigits: n >= 1000 ? 0 : dp});
+}
+function exactDraw(wei){
+  const i = wei / ONE, f = (wei % ONE).toString().padStart(18,"0").replace(/0+$/,"");
+  return i.toString() + (f ? "." + f : "");
+}
+function parseDraw(s){
+  s = String(s).trim().replace(/,/g,"");
+  if(!/^\d+(\.\d{0,18})?$/.test(s) && !/^\.\d{1,18}$/.test(s)) return null;
+  const [a, b=""] = s.split(".");
+  return BigInt(a||"0") * ONE + BigInt((b+"0".repeat(18)).slice(0,18));
+}
+const winOf = bet => bet * 2n - bet * 2n * BigInt(CFG.BURN_BPS) / 10000n;
+const burnOf = bet => bet * 2n * BigInt(CFG.BURN_BPS) / 10000n;
+function ago(ts){
+  const s = Math.max(0, Math.floor(Date.now()/1000) - ts);
+  if(s < 60) return s + " s ago"; if(s < 3600) return Math.floor(s/60) + " min ago";
+  if(s < 86400) return Math.floor(s/3600) + " h ago"; return Math.floor(s/86400) + " d ago";
+}
+
+/* ---- JSON-RPC with a fallback list ---- */
+let rpcIdx = 0;
+async function rpc(method, params){
+  for(let tries=0; tries<CFG.RPCS.length; tries++){
+    const url = CFG.RPCS[(rpcIdx+tries)%CFG.RPCS.length];
+    try{
+      const r = await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});
+      const j = await r.json();
+      if(j.error) throw new Error(j.error.message);
+      rpcIdx = (rpcIdx+tries)%CFG.RPCS.length;
+      return j.result;
+    }catch(e){ if(tries===CFG.RPCS.length-1) throw e; }
+  }
+}
+const call = (to, data) => rpc("eth_call",[{to,data},"latest"]);
+const wordsOf = h => { const b=h.slice(2),o=[]; for(let i=0;i<b.length;i+=64) o.push(b.slice(i,i+64)); return o; };
+const big = w => BigInt("0x"+w);
+const addrOf = w => "0x"+w.slice(24);
+const u = async (to, data) => big(wordsOf(await call(to, data))[0]);
+function idsOf(hex){ const w=wordsOf(hex), len=Number(big(w[1])), out=[]; for(let k=0;k<len;k++) out.push(big(w[2+k])); return out; }
+const STATUS = ["none","open","cancelled","live","settled","void"];
+async function getDuels(ids){
+  if(!ids.length) return [];
+  const data = SEL.getDuels + pad32(32) + pad32(ids.length) + ids.map(pad32).join("");
+  const w = wordsOf(await call(CFG.DUEL, data)), len = Number(big(w[1])), out = [];
+  for(let k=0;k<len;k++){ const b = 2 + k*7;
+    out.push({ id:ids[k], creator:addrOf(w[b]), createdAt:Number(big(w[b+1])), status:STATUS[Number(big(w[b+2]))]||"none",
+      accepter:addrOf(w[b+3]), targetBlock:Number(big(w[b+4])), winner:addrOf(w[b+5]), amount:big(w[b+6]) }); }
+  return out;
+}
+
+/* ---- state ---- */
+const D = { me:null, bal:0n, allow:0n, handEth:0n, ready:false, block:0, open:[], live:[], done:[], mine:[],
+            outcomes:new Map(), stats:{settled:0n, burned:0n, volume:0n}, busy:false, seen:new Set() };
+
+async function refresh(){
+  if(!LIVE) return;
+  try{
+    const [ready, block, openHex, liveHex, count, settled, burned, volume] = await Promise.all([
+      u(CFG.DUEL, SEL.ready), rpc("eth_blockNumber",[]),
+      call(CFG.DUEL, SEL.openDuels + pad32(0) + pad32(200)), call(CFG.DUEL, SEL.liveDuels + pad32(0) + pad32(200)),
+      u(CFG.DUEL, SEL.duelCount), u(CFG.DUEL, SEL.totalSettled), u(CFG.DUEL, SEL.totalBurned), u(CFG.DUEL, SEL.totalVolume)]);
+    D.ready = ready === 1n; D.block = Number(BigInt(block));
+    D.stats = { settled, burned, volume };
+    const recentIds = []; for(let i=count; i>0n && recentIds.length<24; i--) recentIds.push(i);
+    const [open, live, recent] = await Promise.all([getDuels(idsOf(openHex)), getDuels(idsOf(liveHex)), getDuels(recentIds)]);
+    D.open = open.sort((a,b)=>b.createdAt-a.createdAt);
+    D.live = live;
+    for(const d of D.live){
+      if(D.block > d.targetBlock + 2 && !D.outcomes.has(String(d.id))){
+        const w = wordsOf(await call(CFG.DUEL, SEL.outcome + pad32(d.id)));
+        if(big(w[0]) === 1n) D.outcomes.set(String(d.id), { voided: big(w[1]) === 1n, winner: addrOf(w[2]) });
+      }
+    }
+    D.done = recent.filter(d => d.status === "settled" || d.status === "void").slice(0, 10);
+    if(D.me){
+      const [bal, allow, nMine] = await Promise.all([
+        u(CFG.TOKEN, SEL.balanceOf + padAddr(D.me)), u(CFG.TOKEN, SEL.allowance + padAddr(D.me) + padAddr(CFG.DUEL)),
+        u(CFG.DUEL, SEL.duelCountOf + padAddr(D.me))]);
+      D.bal = bal; D.allow = allow;
+      const start = nMine > 20n ? nMine - 20n : 0n;
+      const mineIds = idsOf(await call(CFG.DUEL, SEL.duelsOf + padAddr(D.me) + pad32(start) + pad32(20)));
+      D.mine = (await getDuels(mineIds)).reverse();
+      if(CFG.GAME){ try{ D.handEth = await u(CFG.GAME, SEL.handEth + padAddr(D.me)); }catch{ D.handEth = 0n; } }
+    }
+    render();
+    watchForShow();
+  }catch(e){ /* a public RPC hiccup: the next poll tries again */ }
+}
+
+/* ---- rendering ---- */
+function render(){
+  const me = D.me;
+  // open challenges
+  $("#open-rows").innerHTML = D.open.map(d => {
+    const mine = me && d.creator === me;
+    const act = mine ? `<button class="btn" data-act="cancel" data-id="${d.id}" type="button">Cancel</button>`
+                     : `<button class="btn primary" data-act="take" data-id="${d.id}" type="button">Take it</button>`;
+    return `<tr class="${mine?"you":""}"><td class="mono">${short(d.creator)}${mine?" (you)":""}</td><td class="n" data-l="Bet">${fmtDraw(d.amount)}</td>`+
+           `<td class="n" data-l="Winner gets">${fmtDraw(winOf(d.amount))}</td><td class="n" data-l="Posted">${ago(d.createdAt)}</td><td class="a">${act}</td></tr>`;
+  }).join("");
+  $("#open-empty").hidden = D.open.length > 0;
+  $("#open-n").textContent = D.open.length ? D.open.length + " open" : "";
+  // facing off
+  $("#live-rows").innerHTML = D.live.map(d => {
+    const o = D.outcomes.get(String(d.id));
+    let state = "Waiting for block " + (d.targetBlock + 2).toLocaleString("en-US");
+    let act = "";
+    if(D.block > d.targetBlock + 2){
+      state = o ? (o.voided ? "Void, refunding" : short(o.winner) + " wins, settling") : "Settling";
+      act = `<button class="btn" data-act="settle" data-id="${d.id}" type="button">Settle</button>`;
+    }
+    return `<tr><td class="mono" data-l="Challenger">${short(d.creator)}</td><td class="mono" data-l="Taker">${short(d.accepter)}</td><td class="n" data-l="Bet">${fmtDraw(d.amount)}</td>`+
+           `<td class="state">${state}</td><td class="a">${act}</td></tr>`;
+  }).join("");
+  $("#live-empty").hidden = D.live.length > 0;
+  $("#live-n").textContent = D.live.length ? D.live.length + " live" : "";
+  // results
+  $("#done-rows").innerHTML = D.done.map(d => {
+    if(d.status === "void") return `<tr><td class="mono" colspan="2" data-l="Void">${short(d.creator)} and ${short(d.accepter)}</td><td class="n" data-l="Paid">refunded</td><td class="n" data-l="Burned">0</td><td class="a"></td></tr>`;
+    const loser = d.winner === d.creator ? d.accepter : d.creator;
+    return `<tr><td class="mono" data-l="Winner">${short(d.winner)}</td><td class="mono" data-l="Loser">${short(loser)}</td><td class="n" data-l="Paid">${fmtDraw(winOf(d.amount))}</td>`+
+           `<td class="n" data-l="Burned">${fmtDraw(burnOf(d.amount))}</td><td class="a"><button class="btn" data-act="watch" data-id="${d.id}" type="button">Watch</button></td></tr>`;
+  }).join("");
+  $("#done-empty").hidden = D.done.length > 0;
+  // yours
+  $("#mine-box").hidden = !(me && D.mine.length);
+  $("#mine-n").textContent = D.mine.length ? "last " + D.mine.length : "";
+  $("#mine-rows").innerHTML = D.mine.map(d => {
+    const other = d.creator === me ? d.accepter : d.creator;
+    let res = d.status === "open" ? "Open" : d.status === "cancelled" ? "Cancelled" : d.status === "void" ? "Void, refunded" : "Facing off";
+    let cls = "state";
+    if(d.status === "settled"){ const won = d.winner === me; res = won ? "Won " + fmtDraw(winOf(d.amount)) + " DRAW" : "Lost"; if(won) cls += " won"; }
+    return `<tr><td class="mono" data-l="Opponent">${other && !/^0x0+$/.test(other) ? short(other) : "none yet"}</td><td class="n" data-l="Bet">${fmtDraw(d.amount)}</td><td class="${cls}">${res}</td></tr>`;
+  }).join("");
+  // tally under the scene
+  if(D.stats.settled > 0n) $("#tally").textContent = `${D.stats.settled} ${D.stats.settled === 1n ? "duel" : "duels"} settled, ${fmtDraw(D.stats.burned,0)} DRAW burned`;
+  renderForm();
+}
+
+function renderForm(){
+  const bet = parseDraw($("#amt").value);
+  const ok = bet !== null && bet >= BigInt(CFG.MIN_BET) * ONE;
+  $("#c-win").textContent = ok ? fmtDraw(winOf(bet)) + " DRAW" : "";
+  $("#c-burn").textContent = ok ? fmtDraw(burnOf(bet)) + " DRAW" : "";
+  const warn = $("#warn");
+  let w = "";
+  if(bet !== null && bet > 0n && bet < BigInt(CFG.MIN_BET) * ONE) w = "The smallest bet is 10 DRAW.";
+  else if(D.me && ok && bet > D.bal) w = "You hold " + fmtDraw(D.bal) + " DRAW, less than this bet.";
+  else if(D.me && ok && D.bal - bet <= BigInt(CFG.SAFE_FLOOR) * ONE && D.bal > BigInt(CFG.SAFE_FLOOR) * ONE){
+    w = "This bet leaves you 5 DRAW or less, so your hand leaves the street.";
+    if(D.handEth > 0n) w += " Its unclaimed " + (Number(D.handEth)/1e18).toFixed(5) + " ETH would pass to the other hands. Claim it on the street page first.";
+  }
+  warn.textContent = w; warn.hidden = !w;
+  const can = LIVE && D.ready && D.me && ok && bet <= D.bal && !D.busy;
+  $("#post").disabled = !can;
+  $("#post").textContent = "Post challenge";
+  let line = "Connect a wallet on Base to bet.";
+  if(!LIVE && D.me) line = "Connected as " + short(D.me) + ".";
+  else if(LIVE && !D.ready) line = "Challenges open once both launch caps are lifted.";
+  else if(D.me) line = "In your wallet: " + fmtDraw(D.bal) + " DRAW.";
+  $("#wallet-line").textContent = line;
+  $("#max").disabled = !(D.me && D.bal > 0n);
+}
+
+/* ---- the wallet ---- */
+async function ensureBase(){
+  try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x2105"}]}); }
+  catch(e){
+    if(e && (e.code===4902 || /unrecognized|not added|unknown chain/i.test(e.message||""))){
+      try{ await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:"0x2105",chainName:"Base",
+        nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18},rpcUrls:["https://mainnet.base.org"],blockExplorerUrls:["https://basescan.org"]}]}); }catch{}
+    }
+  }
+}
+async function connectWallet(){
+  if(!window.ethereum){ say("No wallet found in this browser. Open this page in a wallet app or install one."); return; }
+  try{
+    const acc = await window.ethereum.request({method:"eth_requestAccounts"});
+    D.me = acc[0].toLowerCase();
+    for(const b of [$("#connect"),$("#connect-m")]) b.textContent = short(acc[0]);
+    await ensureBase();
+    renderForm(); refresh();
+  }catch(e){ say(e && e.code===4001 ? "Connection cancelled in your wallet." : "The wallet did not connect."); }
+}
+if(window.ethereum && window.ethereum.on){
+  window.ethereum.on("accountsChanged", a => { D.me = a && a[0] ? a[0].toLowerCase() : null;
+    for(const b of [$("#connect"),$("#connect-m")]) b.textContent = D.me ? short(D.me) : "Connect wallet"; renderForm(); refresh(); });
+}
+function say(html){ $("#post-status").innerHTML = html; }
+function why(e){
+  if(e && e.code === 4001) return "Cancelled in your wallet.";
+  const s = JSON.stringify(e && (e.data || e.error || e)) + " " + (e && e.message || "");
+  for(const k in ERR) if(s.includes(k.slice(2))) return ERR[k];
+  if(/insufficient funds/i.test(s)) return "Not enough ETH on Base for gas.";
+  return "The wallet refused: " + esc((e && e.message || "unknown error").slice(0, 120));
+}
+async function send(to, data, label){
+  await ensureBase();
+  const chain = await window.ethereum.request({method:"eth_chainId"});
+  if(parseInt(chain,16) !== CFG.CHAIN_ID) throw {message:"Switch your wallet to Base."};
+  const hash = await window.ethereum.request({method:"eth_sendTransaction",params:[{from:D.me,to,data}]});
+  const link = ' <a href="https://basescan.org/tx/'+hash+'" target="_blank" rel="noopener">See it on Basescan</a>.';
+  say(esc(label) + " sent." + link);
+  for(let i=0;i<60;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    const rc = await rpc("eth_getTransactionReceipt",[hash]).catch(()=>null);
+    if(rc){ if(rc.status !== "0x1") throw {message: label + " failed on chain."}; say(esc(label) + " done." + link); return; }
+  }
+  throw {message:"No receipt yet. Check the transaction on Basescan."};
+}
+async function withAllowance(amount){
+  if(D.allow >= amount) return;
+  await send(CFG.TOKEN, SEL.approve + padAddr(CFG.DUEL) + pad32(amount), "Approval of " + fmtDraw(amount) + " DRAW");
+  D.allow = amount;
+}
+async function act(fn){
+  if(D.busy) return;
+  if(!D.me){ await connectWallet(); if(!D.me) return; }
+  D.busy = true; renderForm();
+  try{ await fn(); }catch(e){ say(why(e)); }
+  D.busy = false; await refresh(); renderForm();
+}
+$("#post").addEventListener("click", () => act(async () => {
+  const bet = parseDraw($("#amt").value);
+  if(bet === null || bet < BigInt(CFG.MIN_BET) * ONE) throw {message:"The smallest bet is 10 DRAW."};
+  await withAllowance(bet);
+  await send(CFG.DUEL, SEL.create + pad32(bet), "Challenge for " + fmtDraw(bet) + " DRAW");
+}));
+document.addEventListener("click", e => {
+  const b = e.target.closest("button[data-act]"); if(!b) return;
+  const id = BigInt(b.dataset.id), kind = b.dataset.act;
+  if(kind === "watch"){ const d = D.done.find(x => x.id === id); if(d) showDuel(d); $(".scene").scrollIntoView({behavior: reduced ? "auto" : "smooth", block:"center"}); return; }
+  if(kind === "take") act(async () => {
+    const d = D.open.find(x => x.id === id); if(!d) throw {message:"That challenge is no longer open."};
+    if(d.amount > D.bal) throw {message:"You need " + fmtDraw(d.amount) + " DRAW to take this challenge."};
+    await withAllowance(d.amount);
+    await send(CFG.DUEL, SEL.accept + pad32(id), "Taking the challenge");
+  });
+  if(kind === "cancel") act(() => send(CFG.DUEL, SEL.cancel + pad32(id), "Cancel"));
+  if(kind === "settle") act(() => send(CFG.DUEL, SEL.settle + pad32(id), "Settle"));
+});
+$("#amt").addEventListener("input", renderForm);
+$("#max").addEventListener("click", () => { if(D.bal > 0n){ $("#amt").value = exactDraw(D.bal); renderForm(); } });
+for(const b of [$("#connect"),$("#connect-m")]) b.addEventListener("click", connectWallet);
+
+/* ============================================================
+   THE SCENE: two gunslingers, the same pixel people as the street
+   ============================================================ */
+const COATS = ["#2A221C","#5B3A24","#3E4A5B","#4F5637","#6E2E2A","#5A5651","#7A5C3A","#2F3A3E"];
+const HATS  = ["#1C1611","#3B2A1E","#6B5540","#8C7A5B"];
+const SKINS = ["#D9A77C","#B98556","#8A5A3A","#E4B894"];
+const BANDS = ["#B23A1B","#3E4A5B","#B8862E","#1C1611","#6E2E2A"];
+const PANTS = ["#3A3F5A","#4B3A2B","#2A2A2A","#5C4A3A"];
+function traitsOf(addr){
+  const h = parseInt(addr.slice(2,10),16), g = parseInt(addr.slice(10,18),16);
+  return { hat:h%4, coat:(h>>2)%COATS.length, skin:(h>>5)%SKINS.length, band:(g)%BANDS.length, pants:(g>>3)%PANTS.length, stache:(g>>16)%3 !== 0 };
+}
+const HAT_ROWS = [
+  ["....HHHH....","...HHHHHH...",".HHHHHHHHHH."],
+  ["....HHHH....","..HHHHHHHH..","HHHHHHHHHHHH"],
+  [".....HH.....","....HHHH....","..HHHHHHHH.."],
+  ["............","...NNNNNN...","..NNNNNNNN.."],
+];
+const BODY_ROWS = ["....ESSE....","....SMMS....","....NNNN....","...CCCCCC...","..CCCCCCCC..",".CC.CCCC.CC.",".CC.CCCC.CC.",
+  ".SS.CCCC.SS.","....PPPP....","....PPPP....","....PP.PP...","....PP.PP...","...BBB.BBB.."];
+const cache = new Map();
+function sprite(t, px, pose){
+  const key = [t.hat,t.coat,t.skin,t.band,t.pants,t.stache,px,pose].join("|");
+  let c = cache.get(key); if(c) return c;
+  const rows = HAT_ROWS[t.hat].concat(BODY_ROWS), Wc = 12 + (pose==="draw" ? 8 : 0);
+  c = document.createElement("canvas"); c.width = Math.ceil(Wc*px); c.height = Math.ceil(rows.length*px);
+  const g = c.getContext("2d");
+  const col = { H:HATS[t.hat], S:SKINS[t.skin], N:BANDS[t.band], C:COATS[t.coat], P:PANTS[t.pants], B:"#1C1611", E:"#1C1611", M:t.stache?"#1C1611":SKINS[t.skin] };
+  rows.forEach((r,y)=>{ for(let x=0;x<12;x++){ const ch=r[x]; if(ch==="."||ch===" ") continue;
+    g.fillStyle = col[ch]; g.fillRect(Math.floor(x*px), Math.floor(y*px), Math.ceil(px), Math.ceil(px)); } });
+  if(pose==="draw"){
+    const y = 7, sx = 8, put=(x,yy,w,h,colr)=>{ g.fillStyle=colr; g.fillRect(Math.floor(x*px),Math.floor(yy*px),Math.ceil(w*px),Math.ceil(h*px)); };
+    put(sx,y,5,2,col.C); put(sx+5,y,1,2,col.S); put(sx+6,y,2,1,"#1C1611"); put(sx+6,y+1,1,1,"#1C1611");
+  }
+  cache.set(key,c); return c;
+}
+const cv = $("#scene"), ctx = cv.getContext("2d");
+let W=0, H=0, GROUND=0, PX=4;
+const BACKDROP = new Image(); BACKDROP.src = "/media/street.jpg";
+function resize(){
+  const dpr = Math.min(devicePixelRatio||1, 2), r = cv.getBoundingClientRect();
+  W = r.width; H = r.height; cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.imageSmoothingEnabled = false; GROUND = H*0.86; PX = Math.max(4, Math.round(H/50));
+}
+addEventListener("resize", resize);
+
+// SHOW: who stands where, who fires, and the clock of the shot
+let SHOW = null;
+function newShow(a, b, winnerSide, bet, label){
+  return { a:{addr:a, t:traitsOf(a)}, b:{addr:b, t:traitsOf(b)}, win:winnerSide, bet, label, t0:performance.now(), fx:[] };
+}
+const SHOT_AT = 1500, FALL_MS = 420;
+function drawFigure(f, x, faceRight, pose, fall){
+  const s = sprite(f.t, PX, pose), w = s.width, h = s.height;
+  ctx.save(); ctx.translate(x, GROUND);
+  if(fall > 0){ ctx.rotate((faceRight ? -1 : 1) * fall * Math.PI/2); }
+  if(!faceRight) ctx.scale(-1, 1);
+  ctx.drawImage(s, -6*PX, -h);
+  ctx.restore();
+  return { w, h };
+}
+function frame(now){
+  requestAnimationFrame(frame);
+  if(!W) return;
+  ctx.clearRect(0,0,W,H);
+  if(BACKDROP.complete && BACKDROP.naturalWidth){
+    const s = Math.max(W/BACKDROP.naturalWidth, H/BACKDROP.naturalHeight), iw = BACKDROP.naturalWidth*s, ih = BACKDROP.naturalHeight*s;
+    ctx.drawImage(BACKDROP, (W-iw)/2, (H-ih)*0.7, iw, ih);
+  } else { ctx.fillStyle = "#D4BB8B"; ctx.fillRect(0,0,W,H); }
+  ctx.fillStyle = "rgba(28,22,17,.16)"; ctx.fillRect(0, GROUND, W, H-GROUND);
+  if(!SHOW) return;
+  const t = reduced ? 1e9 : now - SHOW.t0;
+  const xa = W*0.30, xb = W*0.70, bob = reduced ? 0 : Math.sin(now/420)*0.6;
+  const shot = SHOW.win && t >= SHOT_AT;
+  const fallP = shot ? Math.min(1, (t - SHOT_AT - 120) / FALL_MS) : 0;
+  const aWins = SHOW.win === "a", bWins = SHOW.win === "b";
+  ctx.save(); ctx.translate(0, bob);
+  drawFigure(SHOW.a, xa, true,  shot && aWins ? "draw" : "idle", shot && bWins ? Math.max(0, fallP) : 0);
+  drawFigure(SHOW.b, xb, false, shot && bWins ? "draw" : "idle", shot && aWins ? Math.max(0, fallP) : 0);
+  ctx.restore();
+  // muzzle flash and smoke, once
+  if(shot && !SHOW.fired){
+    SHOW.fired = true;
+    const dir = aWins ? 1 : -1, gx = (aWins ? xa : xb) + dir*PX*10, gy = GROUND - PX*16 + PX*7.5 + (HAT_ROWS[0].length-3)*PX;
+    SHOW.fx.push({type:"flash", x:gx, y:gy, dir, life:7});
+    if(!reduced) for(let i=0;i<9;i++) SHOW.fx.push({type:"smoke", x:gx, y:gy, vx:dir*(0.3+Math.random()*0.9), vy:-0.25-Math.random()*0.5, s:2+Math.random()*3, life:40+Math.random()*20|0});
+    const lx = aWins ? xb : xa;
+    if(!reduced) for(let i=0;i<16;i++) SHOW.fx.push({type:"chip", x:lx+(Math.random()-.5)*PX*6, y:GROUND-PX*8, vx:(Math.random()-.5)*2.2, vy:-1-Math.random()*2, life:70+Math.random()*30|0});
+  }
+  for(const p of SHOW.fx){
+    if(p.type==="flash"){ ctx.fillStyle = "rgba(244,196,92,"+(p.life/7)+")"; ctx.fillRect(p.dir>0 ? p.x : p.x-PX*7, p.y, PX*7, PX); ctx.fillStyle="rgba(178,58,27,"+(p.life/7)+")"; ctx.fillRect(p.dir>0 ? p.x+PX*7 : p.x-PX*8, p.y-PX, PX, PX*3); }
+    if(p.type==="smoke"){ p.x+=p.vx; p.y+=p.vy; ctx.fillStyle="rgba(92,78,63,"+(p.life/60)*0.5+")"; ctx.fillRect(p.x, p.y, p.s, p.s); }
+    if(p.type==="chip"){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.12; if(p.y>GROUND){ p.y=GROUND; p.vx*=0.5; p.vy=0; } ctx.fillStyle="rgba(178,58,27,"+Math.min(1,p.life/40)+")"; ctx.fillRect(p.x, p.y, 3, 3); }
+    p.life--;
+  }
+  SHOW.fx = SHOW.fx.filter(p => p.life > 0);
+  // names over the heads
+  ctx.font = "600 " + Math.max(11, Math.min(15, Math.round(PX*1.6))) + "px 'IBM Plex Mono', monospace"; ctx.textAlign = "center";
+  const top = GROUND - PX*17 - 10;
+  if(SHOW.label){
+    ctx.fillStyle = "rgba(239,228,203,.9)";
+    for(const [x, s] of [[xa, SHOW.label.a],[xb, SHOW.label.b]]){ const w = ctx.measureText(s).width + 12; ctx.fillRect(x - w/2, top - 15, w, 20); }
+    ctx.fillStyle = "#1C1611"; ctx.fillText(SHOW.label.a, xa, top); ctx.fillText(SHOW.label.b, xb, top);
+  }
+  if(shot && SHOW.bet && fallP >= 1){
+    const wx = aWins ? xa : xb, lx = aWins ? xb : xa;
+    const tag = (str, x, y, colr) => { const w = ctx.measureText(str).width + 12;
+      ctx.fillStyle = "rgba(239,228,203,.92)"; ctx.fillRect(x - w/2, y - 15, w, 20); ctx.fillStyle = colr; ctx.fillText(str, x, y); };
+    tag("+" + fmtDraw(winOf(SHOW.bet)) + " DRAW", wx, top - 26, "#1C1611");
+    tag(fmtDraw(burnOf(SHOW.bet)) + " burned", lx, GROUND - PX*6 - 8, "#B23A1B");
+  }
+}
+function cap(html){ $("#cap").innerHTML = html; }
+function showDuel(d){
+  const won = d.status === "settled" ? d.winner : (D.outcomes.get(String(d.id)) || {}).winner;
+  const side = won ? (won === d.creator ? "a" : "b") : null;
+  SHOW = newShow(d.creator, d.accepter, side, d.amount, { a: short(d.creator), b: short(d.accepter) });
+  D.seen.add(String(d.id));
+  if(side) cap(`<b class="mono">${short(won)}</b> draws first and takes ${fmtDraw(winOf(d.amount))} DRAW. ${fmtDraw(burnOf(d.amount))} DRAW burns.`);
+  else cap(`<b class="mono">${short(d.creator)}</b> and <b class="mono">${short(d.accepter)}</b> face off for ${fmtDraw(d.amount)} DRAW each. The blocks decide.`);
+}
+// live: play every newly decided duel once; otherwise hold the first standoff, else replay the last result
+function watchForShow(){
+  for(const d of D.live){ const o = D.outcomes.get(String(d.id));
+    if(o && !o.voided && !D.seen.has(String(d.id)+"!")){ D.seen.add(String(d.id)+"!"); showDuel(d); return; } }
+  if(SHOW && performance.now() - SHOW.t0 < 6000) return;
+  const waiting = D.live.find(d => !D.outcomes.has(String(d.id)));
+  if(waiting){ showDuel(waiting); return; }
+  const last = D.done.find(d => d.status === "settled");
+  if(last){ showDuel(last); return; }
+  idleShow();
+}
+// before launch, and on a quiet table: two strangers, no names, a shot every few seconds
+const randAddr = () => { let s="0x"; for(let i=0;i<40;i++) s+="0123456789abcdef"[Math.random()*16|0]; return s; };
+function idleShow(){
+  SHOW = newShow(randAddr(), randAddr(), Math.random() < .5 ? "a" : "b", null, null);
+  cap("Two hands, one bet, one shot. The challenger wins on an odd seed, the taker on an even one.");
+}
+
+/* ---- boot ---- */
+resize(); requestAnimationFrame(frame); renderForm();
+if(LIVE){
+  const fc = $("#foot-ca"); fc.hidden = false;
+  fc.innerHTML = 'Duel contract <a href="https://basescan.org/address/'+CFG.DUEL+'" target="_blank" rel="noopener">'+CFG.DUEL+'</a>';
+  refresh(); setInterval(refresh, 4000);
+} else {
+  idleShow(); setInterval(idleShow, 6000);
+}
+</script>
+</body>
+</html>

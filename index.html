@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quickdraw</title>
+<meta name="description" content="Hold DRAW and your wallet draws for you. Trading arms a draw. The block picks two holders of similar size, and the bigger one draws first. The loser's stack burns, the winner takes ETH.">
+<meta property="og:title" content="Quickdraw">
+<meta property="og:description" content="Hold DRAW and your wallet draws for you. The loser's stack burns. The winner takes ETH.">
+<meta property="og:image" content="https://quickdrawprotocol.xyz/og.png">
+<meta property="og:url" content="https://quickdrawprotocol.xyz/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://quickdrawprotocol.xyz/og.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23B23A1B'/%3E%3Crect x='6' y='13' width='14' height='6' fill='%23EFE4CB'/%3E%3Crect x='18' y='9' width='4' height='4' fill='%23EFE4CB'/%3E%3Crect x='8' y='19' width='4' height='6' fill='%23EFE4CB'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFE4CB; --paper-2:#E4D4B0; --ink:#1C1611; --ink-2:#5C4E3F; --rust:#B23A1B; --sand:#D4BB8B;
+  --rule:rgba(28,22,17,.28); --rule-soft:rgba(28,22,17,.14);
+  --display:'Rye', 'Georgia', serif; --body:'Lora', 'Georgia', serif; --mono:'IBM Plex Mono', ui-monospace, 'Consolas', monospace;
+  --ease-out:cubic-bezier(.23,1,.32,1);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.01em;line-height:1.05;margin:0}
+h1{font-size:clamp(2.3rem,4.6vw,3.9rem)}
+h2{font-size:clamp(1.7rem,3.2vw,2.5rem)}
+h3{font-size:1.15rem;line-height:1.3}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+@media(min-width:768px){.wrap{padding:0 32px}}
+.kicker{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rust)}
+.muted{color:var(--ink-2)}
+.mono{font-family:var(--mono)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* masthead */
+header{border-bottom:2px solid var(--ink)}
+.mast{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+.wordmark{font-family:var(--display);font-size:1.45rem;text-decoration:none;letter-spacing:.01em}
+.wordmark span{color:var(--rust)}
+nav.desk{display:none;gap:4px;align-items:center}
+nav a,nav button,.btn{font-family:var(--mono);font-size:.84rem;letter-spacing:.04em;text-decoration:none;padding:10px 14px;min-height:44px;display:inline-flex;align-items:center;border:0;background:none;color:var(--ink);cursor:pointer;border-radius:3px}
+nav a:hover,nav button:hover{background:var(--paper-2)}
+.btn{border:2px solid var(--ink);transition:transform 160ms var(--ease-out),background 160ms ease}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn.primary:hover{background:var(--rust);border-color:var(--rust)}
+.btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+details.menu{position:relative}
+details.menu summary{list-style:none;font-family:var(--mono);font-size:.84rem;padding:10px 14px;min-height:44px;display:inline-flex;align-items:center;border:2px solid var(--ink);border-radius:3px;cursor:pointer}
+details.menu summary::-webkit-details-marker{display:none}
+details.menu .sheet{position:absolute;right:0;top:calc(100% + 8px);background:var(--paper);border:2px solid var(--ink);padding:8px;display:flex;flex-direction:column;min-width:200px;z-index:20}
+details.menu .sheet a,details.menu .sheet button{justify-content:flex-start;width:100%}
+@media(min-width:768px){nav.desk{display:flex}details.menu{display:none}}
+
+/* hero */
+.hero{padding:44px 0 36px;display:grid;gap:28px}
+@media(min-width:1024px){.hero{grid-template-columns:5fr 7fr;gap:48px;padding:64px 0 52px;align-items:center}}
+.hero p.lede{font-size:1.14rem;max-width:34em;margin-top:18px}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.film{margin:0;position:relative;border:3px solid var(--ink);background:var(--ink);aspect-ratio:16/9}
+.film video{display:block;width:100%;height:100%;object-fit:cover}
+.film .sound{position:absolute;right:10px;bottom:10px;font-family:var(--mono);font-size:.8rem;letter-spacing:.04em;padding:8px 12px;min-height:40px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:3px;cursor:pointer;transition:transform 160ms var(--ease-out)}
+.film .sound:active{transform:scale(.97)}
+.film figcaption{position:absolute;left:10px;bottom:10px;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;background:rgba(28,22,17,.78);color:var(--paper);padding:6px 9px;border-radius:2px}
+.still{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border:2px solid var(--ink);margin-bottom:14px;image-rendering:auto;background:var(--sand)}
+.stills{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
+.stills .still{margin-bottom:0}
+.poster{border:3px double var(--ink);padding:18px 20px;background:var(--paper-2);position:relative}
+.poster:before{content:"";position:absolute;inset:5px;border:1px solid var(--rule)}
+.poster h3{font-family:var(--display);font-size:1.6rem;text-align:center;letter-spacing:.06em;padding-bottom:10px;border-bottom:1px solid var(--rule);margin-bottom:12px}
+.poster ol{margin:0;padding:0 0 0 1.2em;font-size:.98rem;line-height:1.5}
+.poster li{margin:6px 0}
+.poster li b{font-family:var(--mono);font-weight:600;color:var(--rust)}
+
+/* section frame */
+section{padding:40px 0}
+@media(min-width:768px){section{padding:56px 0}}
+.sec-head{display:grid;gap:10px;margin-bottom:22px}
+@media(min-width:768px){.sec-head{grid-template-columns:1fr 1fr;align-items:end}}
+.sec-head p{max-width:36em}
+hr.rule{border:0;border-top:2px solid var(--ink);margin:0}
+
+/* the street */
+.street-frame{border:3px solid var(--ink);background:var(--sand);position:relative}
+canvas#street-canvas{display:block;width:100%;height:min(62vw,560px);min-height:300px;touch-action:manipulation}
+.caption{display:grid;gap:6px;padding:12px 0 0;font-size:.92rem}
+@media(min-width:768px){.caption{grid-template-columns:1fr auto;align-items:center}}
+#story{min-height:1.5em}
+#story.flash{animation:storyflash 500ms ease}
+@keyframes storyflash{from{color:var(--rust)}to{color:inherit}}
+.clock{font-family:var(--mono);font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.clock b{color:var(--rust);font-weight:600}
+.board{display:grid;gap:24px;margin-top:26px}
+@media(min-width:1024px){.board{grid-template-columns:3fr 2fr}}
+.bounty{border:3px double var(--ink);padding:16px 18px 14px;background:var(--paper-2);text-align:center;margin-bottom:18px}
+.bounty .kicker{display:block;margin-bottom:4px}
+.bounty .big{font-family:var(--display);font-size:clamp(2rem,4vw,2.8rem);line-height:1}
+.bounty small{display:block;font-size:.82rem;color:var(--ink-2);margin-top:6px}
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-top:1px solid var(--rule)}
+.facts div{padding:10px 0;border-bottom:1px solid var(--rule-soft);font-size:.9rem}
+.facts div:nth-child(odd){padding-right:12px;border-right:1px solid var(--rule-soft)}
+.facts div:nth-child(even){padding-left:12px}
+.facts b{display:block;font-family:var(--mono);font-weight:600;font-size:1rem}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;font-family:var(--mono);font-weight:600;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);padding:6px 6px 8px;border-bottom:2px solid var(--ink)}
+td{padding:7px 6px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+tr.you td{background:rgba(178,58,27,.08)}
+.status{font-family:var(--mono);font-size:.76rem;letter-spacing:.04em}
+.status.cover{color:var(--rust)}
+.status.rest{color:#4F5637}
+.tbl-wrap{overflow-x:auto}
+.ledger{list-style:none;margin:14px 0 0;padding:0;font-size:.9rem;max-height:300px;overflow:auto;border-top:1px solid var(--rule)}
+.ledger li{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:7px 0;border-bottom:1px solid var(--rule-soft)}
+.ledger .t{font-family:var(--mono);font-size:.76rem;color:var(--ink-2);padding-top:3px}
+.ledger li.hit{border-left:3px solid var(--rust);padding-left:8px}
+.find{display:flex;gap:8px;margin-top:14px}
+.find input{flex:1;min-width:0;font-family:var(--mono);font-size:.84rem;padding:10px 12px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:3px}
+.find input:focus{outline:2px solid var(--rust);outline-offset:2px}
+
+/* how it works */
+.steps{display:grid;gap:22px}
+@media(min-width:768px){.steps{grid-template-columns:repeat(3,1fr);gap:32px}}
+.step .no{font-family:var(--display);font-size:2.6rem;color:var(--rust);line-height:1}
+.step h3{margin:8px 0 8px}
+.step p{font-size:.98rem}
+
+/* money */
+.money{display:grid;gap:24px}
+@media(min-width:1024px){.money{grid-template-columns:5fr 7fr;gap:48px}}
+.money table td:first-child{font-weight:600}
+.money .total{font-family:var(--mono);font-weight:600}
+
+/* protections */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-top:2px solid var(--ink);border-left:2px solid var(--ink)}
+@media(min-width:1024px){.cards{grid-template-columns:repeat(4,1fr)}}
+.card{padding:18px 16px 20px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+.card .v{font-family:var(--display);font-size:1.7rem;line-height:1.1}
+.card h3{font-size:1rem;margin:6px 0 6px}
+.card p{font-size:.9rem;color:var(--ink-2)}
+
+/* nobody table */
+.nobody td:nth-child(2){font-family:var(--mono);font-weight:600;white-space:nowrap}
+
+footer{border-top:2px solid var(--ink);padding:28px 0 40px;font-size:.9rem;color:var(--ink-2)}
+footer .mono{word-break:break-all}
+.note{font-size:.88rem;color:var(--ink-2);max-width:40em}
+.yours{border:2px solid var(--ink);padding:16px 18px;margin-top:18px;background:var(--paper)}
+.yours h3{font-family:var(--display);font-size:1.25rem;margin-bottom:10px}
+.yours .facts{margin-top:4px}
+.claim-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.claim-row .btn{min-width:150px;justify-content:center}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+[hidden]{display:none !important}
+.why{font-size:.84rem;color:var(--ink-2)}
+.why a{color:var(--rust)}
+@media(prefers-reduced-motion:reduce){#story.flash{animation:none}.btn{transition:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap mast">
+    <a class="wordmark" href="#top">QUICK<span>DRAW</span></a>
+    <nav class="desk" aria-label="Site">
+      <a href="#street">The street</a>
+      <a href="#rules">How it works</a>
+      <a href="#money">The money</a>
+      <a href="/duel">Showdown</a>
+      <a href="/rules">Rules</a>
+      <a id="buy-top" class="btn" href="#" aria-disabled="true">Buy DRAW</a>
+      <button id="connect" class="btn primary" type="button">Connect wallet</button>
+    </nav>
+    <details class="menu">
+      <summary aria-label="Open menu">Menu</summary>
+      <div class="sheet">
+        <a href="#street">The street</a>
+        <a href="#rules">How it works</a>
+        <a href="#money">The money</a>
+        <a href="/duel">Showdown</a>
+        <a href="/rules">Rules</a>
+        <a id="buy-top-m" href="#" aria-disabled="true">Buy DRAW</a>
+        <button id="connect-m" type="button">Connect wallet</button>
+      </div>
+    </details>
+  </div>
+</header>
+
+<main id="top">
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <span class="kicker">A duel that lives inside the token</span>
+      <h1 style="margin-top:14px">Hold DRAW. Your wallet draws for you.</h1>
+      <p class="lede">Every holder stands on one street. Trading arms a draw. The block picks two hands of similar size, and the bigger one draws first. The loser gives up part of their stack. Most of it burns. The winner takes ETH.</p>
+      <div class="cta">
+        <a id="buy-hero" class="btn primary" href="#" aria-disabled="true">Buy DRAW</a>
+        <a class="btn" href="/rules">Read the rules</a>
+      </div>
+      <p class="note" style="margin-top:18px">No staking. No deposit. Nothing to approve. Your balance is your stack, and selling takes you off the street.</p>
+    </div>
+    <figure class="film">
+      <video id="film" src="/media/quickdraw-film.mp4" poster="/media/poster.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Quickdraw: two gunslingers face off on the street, the bigger one shoots first and the loser bursts into burning gold coins."></video>
+      <figcaption>The street at noon</figcaption>
+      <button class="sound" id="film-sound" type="button" aria-pressed="false">Sound on</button>
+    </figure>
+  </div>
+</div>
+
+<hr class="rule">
+
+<section id="street">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="kicker">The street</span><h2 style="margin-top:8px">Every holder, standing in the open</h2></div>
+      <p class="muted" id="street-sub">Bigger stacks stand taller. A hand under cover wears a red band. Hover a hand to read it.</p>
+    </div>
+    <div class="street-frame">
+      <canvas id="street-canvas" aria-label="The street. Every holder drawn as a gunslinger, duels play out as they settle."></canvas>
+    </div>
+    <div class="caption">
+      <div id="story">The street is quiet.</div>
+      <div class="clock" id="clock">next draw in <b>12 s</b></div>
+    </div>
+
+    <div class="board">
+      <div>
+        <div class="tbl-wrap">
+        <table id="standings" aria-label="Standings">
+          <thead><tr><th>Hand</th><th class="n">Stack</th><th class="n">Wins</th><th class="n">ETH</th><th>Status</th></tr></thead>
+          <tbody id="tbl"></tbody>
+        </table>
+        </div>
+        <div class="find">
+          <input id="find" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Paste a wallet to find it on the street" aria-label="Find a wallet">
+        </div>
+        <ul class="ledger" id="log" aria-live="polite"></ul>
+      </div>
+      <div>
+        <div class="bounty">
+          <span class="kicker">Standing bounty</span>
+          <div class="big"><span id="s-bounty">0.000</span> ETH</div>
+          <small>Each win drinks from it. Every trade refills it.</small>
+        </div>
+        <div class="facts">
+          <div><b id="s-hands">0</b>hands on the street</div>
+          <div><b id="s-draws">0</b>draws settled</div>
+          <div><b id="s-burn">0</b>DRAW burned</div>
+          <div><b id="s-supply">100,000</b>DRAW left</div>
+        </div>
+        <p class="note" style="margin-top:14px" id="board-note">Sample hands, real rules. The standings switch to the chain the moment the contract is set.</p>
+        <div class="yours" id="yours" aria-live="polite">
+          <h3>Your hand</h3>
+          <div id="yours-empty">
+            <p class="why">Connect your wallet to see your stack, your wins and the ETH you can claim.</p>
+            <div class="claim-row"><button class="btn primary" type="button" id="yours-connect">Connect wallet</button></div>
+          </div>
+          <div id="yours-body" hidden>
+            <div class="facts">
+              <div><b id="y-stack">0</b>DRAW in your stack</div>
+              <div><b id="y-wins">0</b>draws won</div>
+              <div><b id="y-status">off the street</b>status</div>
+              <div><b id="y-eth">0.0000</b>ETH you won</div>
+            </div>
+            <div class="claim-row">
+              <button class="btn primary" type="button" id="y-claim" disabled>Claim ETH</button>
+              <span class="why" id="y-claim-why"></span>
+            </div>
+            <div class="claim-row" id="y-spore-row" hidden>
+              <button class="btn" type="button" id="y-spore">Claim spore</button>
+              <span class="why" id="y-spore-why"></span>
+            </div>
+            <div class="claim-row" id="y-escrow-row" hidden>
+              <button class="btn" type="button" id="y-escrow">Claim held ETH</button>
+              <span class="why" id="y-escrow-why"></span>
+            </div>
+            <p class="why" id="y-tx" style="margin-top:10px"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="rules">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="kicker">How a draw works</span><h2 style="margin-top:8px">Nobody aims. Nobody presses fire.</h2></div>
+      <p class="muted">The whole game runs inside the token contract on Base. Trading moves it. The chain decides it.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><img class="still" src="/media/standoff.jpg" alt="Two gunslingers step into the middle of the street and face each other." loading="lazy" width="960" height="540"><div class="no">1</div><h3>Buy, and you are on the street</h3><p>Your balance is your stack. Bigger stacks stand taller. Hands sit in size tiers, and a draw only ever pairs neighbours on that ladder, so a whale cannot reach a small holder.</p></div>
+      <div class="step"><img class="still" src="/media/holster.jpg" alt="A close-up of a hand hovering over a holstered revolver." loading="lazy" width="960" height="540"><div class="no">2</div><h3>Trading arms the draw</h3><p>Every 0.05 ETH of volume arms one draw. One swap can arm at most four. The pair is picked from a seed nobody can read yet. Draws settle in rounds, at most one round every 12 seconds.</p></div>
+      <div class="step"><img class="still" src="/media/shot.jpg" alt="The bigger gunslinger fires first, a bright muzzle flash between the two." loading="lazy" width="960" height="540"><div class="no">3</div><h3>The block decides</h3><p>The seed is the hash of the block the draw was armed in. It did not exist when the draw was armed and it never changes afterwards. The loser gives up at most 25% of their peak. 95% of that burns. The winner takes 5% and drinks 20% of the bounty.</p></div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="money">
+  <div class="wrap">
+    <div class="money">
+      <div>
+        <span class="kicker">The money</span>
+        <h2 style="margin-top:8px">Every trade pays a fee. It is split between the protocol and the bounty.</h2>
+        <p class="muted" style="margin-top:14px">Holders earn ETH by winning draws, never tokens. Supply only shrinks, because 95% of what a loser gives up is burned. Your ETH is claimable once your hand is one hour old.</p>
+        <div class="stills">
+          <img class="still" src="/media/coins.jpg" alt="The loser bursts into a pile of gold coins that burn away in smoke." loading="lazy" width="960" height="540">
+          <img class="still" src="/media/winner.jpg" alt="The winner tips his hat, holding a gold coin." loading="lazy" width="960" height="540">
+        </div>
+      </div>
+      <div class="tbl-wrap">
+      <table aria-label="Where every fee goes">
+        <thead><tr><th>Charge</th><th>Taken in</th><th>Goes to</th></tr></thead>
+        <tbody>
+          <tr><td>Protocol share</td><td>ETH, on buys and sells</td><td>The protocol treasury, fixed at deployment.</td></tr>
+          <tr><td>Bounty share</td><td>ETH, on buys and sells</td><td>The pool every winner drinks from.</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="note" style="margin-top:14px">The protocol can collect the standing bounty, and winnings not claimed within an hour of becoming claimable. Holder balances never move.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="alive">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="kicker">What keeps you alive</span><h2 style="margin-top:8px">Eight rules, all in the contract</h2></div>
+      <p class="muted">Losing a draw costs you a slice, never your stack. These are the limits, with the exact numbers compiled into the code.</p>
+    </div>
+    <div class="cards">
+      <div class="card"><div class="v">30 s</div><h3>New hand cover</h3><p>A fresh hand cannot be drawn on for 30 seconds. It is keyed to your first buy, so selling and rebuying does not reset it.</p></div>
+      <div class="card"><div class="v">1 hour</div><h3>Cover after a loss</h3><p>Lose a draw and nobody can draw on you for an hour. Buying or selling does not clear it.</p></div>
+      <div class="card"><div class="v">3, then 80 min</div><h3>Rest</h3><p>Win three in a row and you sit out 80 minutes. You cannot draw and nobody can draw on you.</p></div>
+      <div class="card"><div class="v">75%</div><h3>The floor</h3><p>You always keep 75% of your peak stack. A draw never takes more than the rest, and never all of it at once.</p></div>
+      <div class="card"><div class="v">5 DRAW</div><h3>The safety floor</h3><p>At 5 DRAW or less you leave the street. Nobody can draw on you. Claim your ETH before you shrink.</p></div>
+      <div class="card"><div class="v">1.25x to 4x</div><h3>The ladder</h3><p>Only a hand between 1.25 and 4 times your size can face you. A whale never reaches a small holder.</p></div>
+      <div class="card"><div class="v">6 min</div><h3>Bounty cooldown</h3><p>A hand drinks from the bounty once every six minutes. Quick wins in a row stop paying.</p></div>
+      <div class="card"><div class="v">5 min</div><h3>Established hands only</h3><p>A wallet must be five minutes old before it can draw on anyone. Nobody can fund a fresh wallet and aim it.</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap" style="display:grid;gap:8px">
+    <div><b>Quickdraw</b>, a duel that lives inside the token. On Base.</div>
+    <div class="mono" id="foot-ca" hidden></div>
+    <div>Not financial advice. Losing a draw costs you at most the top 25% of your peak stack. The other 75% can never be taken.</div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   CONFIG. Set CONTRACT after launch to switch the street from
+   sample hands to the live chain. No dependencies: plain JSON-RPC
+   and a hand-rolled ABI decoder for the QuickdrawHook views.
+   ============================================================ */
+const CFG = {
+  CONTRACT: "",            // the hook (the game): set after launch
+  TOKEN: "",               // the DRAW token (balances, supply)
+  TRADE_URL: "",           // where to buy: the Programmable page of the coin once listed
+  RPCS: ["https://base-rpc.publicnode.com","https://mainnet.base.org","https://base.drpc.org"],
+  CHAIN_ID: 8453,
+  NAME: "Quickdraw", SYMBOL: "DRAW",
+  SAFE_FLOOR: 5, FLOOR_BPS: 7500, BURN_BPS: 9500, BOUNTY_DRAW_BPS: 2000,
+  SHIELD_S: 3600, FATIGUE_S: 4800, STREAK_MAX: 3, KILL_COOLDOWN_S: 360,
+};
+const SEL = {
+  handPage:"0x64ba6148", shieldUntil:"0xf18b327e", balanceOf:"0x70a08231", claimEth:"0xb7cdddcb",
+  liveHands:"0xda665a62", totalSupply:"0x18160ddd", totalBurned:"0xd89135cd", totalEats:"0x4b342dd7",
+  bountyPool:"0x08637d20", eatsDue:"0x2c5e4f19", pendingEats:"0xd5fd108e",
+  handEth:"0xede83090", bloodClaimable:"0x39f3d9c9", ethEscrow:"0x797d112b", firstBornAt:"0xbbb4ab96",
+  claimSpore:"0x9cf3ac48", claimEscrow:"0x5028928a", reclaimableAt:"0xb08fa846"
+};
+const TOPIC = {
+  Spawned:"0x4656a88c583aaef74d563e02514fe3b09177727999cc57b9919daaf53d54ab13",
+  Eaten:  "0x82c92ef84bd9e1abb026085f62720a19083da300c18c228a60da1d77b60eda17",
+  Husked: "0x3e7edb0cb1ecdb4c259dc991a8562f41d671645e0a8cc7bb3f1250df79c4f52f",
+  Shielded:"0x666aa1c38ec55d867c244939e9a30ac4b029c4fad7fc1a9289f9ef17f23abf62",
+};
+const LIVE = !!CFG.CONTRACT;
+const $ = s => document.querySelector(s);
+const pad32 = v => BigInt(v).toString(16).padStart(64,"0");
+const short = a => a.slice(0,6)+"..."+a.slice(-4);
+const fmt = (n,d=0) => Number(n).toLocaleString("en-US",{maximumFractionDigits:d,minimumFractionDigits:d});
+const now = () => Date.now()/1000;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const coarse = matchMedia("(pointer: coarse)").matches;
+
+/* ---- JSON-RPC with a fallback list ---- */
+let rpcIdx = 0;
+async function rpc(method, params){
+  for(let tries=0; tries<CFG.RPCS.length; tries++){
+    const url = CFG.RPCS[(rpcIdx+tries)%CFG.RPCS.length];
+    try{
+      const r = await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});
+      const j = await r.json();
+      if(j.error) throw new Error(j.error.message);
+      rpcIdx = (rpcIdx+tries)%CFG.RPCS.length;
+      return j.result;
+    }catch(e){ if(tries===CFG.RPCS.length-1) throw e; }
+  }
+}
+const ethCall = (data, to=CFG.CONTRACT) => rpc("eth_call",[{to,data},"latest"]);
+const wordsOf = h => { const b=h.slice(2),o=[]; for(let i=0;i<b.length;i+=64) o.push(b.slice(i,i+64)); return o; };
+const big = w => BigInt("0x"+w);
+const addrOf = w => "0x"+w.slice(24);
+const callU = async (sel, to) => big(wordsOf(await ethCall(sel, to))[0]);
+function decodeHandPage(hex){
+  const w = wordsOf(hex);
+  const arrAt = (i, conv) => { const p=Number(big(w[i]))/32, len=Number(big(w[p])), out=[]; for(let k=0;k<len;k++) out.push(conv(w[p+1+k])); return out; };
+  return { ids:arrAt(0,x=>"0x"+x), owners:arrAt(1,addrOf), masses:arrAt(2,big), kills:arrAt(3,x=>Number(big(x))), eth:arrAt(4,big),
+           nextBucket:Number(big(w[5])), nextCursor:big(w[6]), done:big(w[7])===1n };
+}
+
+/* ---- state ---- */
+const S = { hands:new Map(), fx:[], stats:{hands:0,draws:0,burned:0,supply:100000,bounty:0}, me:null, found:null,
+            duel:null, nextDraw:12, armed:false, hover:null };
+
+/* ---- traits: everything about a hand's look comes from its address ---- */
+const COATS = ["#2A221C","#5B3A24","#3E4A5B","#4F5637","#6E2E2A","#5A5651","#7A5C3A","#2F3A3E"];
+const HATS  = ["#1C1611","#3B2A1E","#6B5540","#8C7A5B"];
+const SKINS = ["#D9A77C","#B98556","#8A5A3A","#E4B894"];
+const BANDS = ["#B23A1B","#3E4A5B","#B8862E","#1C1611","#6E2E2A"];
+const PANTS = ["#3A3F5A","#4B3A2B","#2A2A2A","#5C4A3A"];
+function traitsOf(addr){
+  const h = parseInt(addr.slice(2,10),16), g = parseInt(addr.slice(10,18),16);
+  return { hat:h%4, coat:(h>>2)%COATS.length, skin:(h>>5)%SKINS.length, band:(g)%BANDS.length, pants:(g>>3)%PANTS.length,
+           face: (g>>5)%2 ? 1 : -1, gait:(g>>6)%7, phase:((g>>9)%100)/100*6.283, stache: (g>>16)%3 !== 0 };
+}
+
+/* ---- pixel sprites (12 wide x 16 tall). H hat, S skin, N bandana, C coat, P pants, B boots, . empty ---- */
+const HAT_ROWS = [
+  ["....HHHH....","...HHHHHH...",".HHHHHHHHHH."],   // stetson
+  ["....HHHH....","..HHHHHHHH..","HHHHHHHHHHHH"],   // wide brim
+  [".....HH.....","....HHHH....","..HHHHHHHH.."],   // bowler
+  ["............","...NNNNNN...","..NNNNNNNN.."],   // bandana, no hat
+];
+const BODY_ROWS = [
+  "....ESSE....",
+  "....SMMS....",
+  "....NNNN....",
+  "...CCCCCC...",
+  "..CCCCCCCC..",
+  ".CC.CCCC.CC.",
+  ".CC.CCCC.CC.",
+  ".SS.CCCC.SS.",
+  "....PPPP....",
+  "....PPPP....",
+  "....PP.PP...",
+  "....PP.PP...",
+  "...BBB.BBB..",
+];
+const spriteCache = new Map();
+function spriteOf(t, px, pose, shade){
+  // sprites are always built facing right; drawHand mirrors the ones that face left
+  const key = [t.hat,t.coat,t.skin,t.band,t.pants,t.stache,px,pose,shade].join("|");
+  let c = spriteCache.get(key); if(c) return c;
+  const rows = HAT_ROWS[t.hat].concat(BODY_ROWS);
+  const Wc = 12 + (pose==="draw" ? 8 : 0), Hc = rows.length;
+  c = document.createElement("canvas"); c.width = Math.ceil(Wc*px); c.height = Math.ceil(Hc*px);
+  const g = c.getContext("2d");
+  const col = { H:HATS[t.hat], S:SKINS[t.skin], N:BANDS[t.band], C:COATS[t.coat], P:PANTS[t.pants], B:"#1C1611", E:"#1C1611", M:t.stache?"#1C1611":SKINS[t.skin] };
+  if(shade){ g.filter = "brightness(.72) saturate(.7)"; }
+  rows.forEach((r,y)=>{ for(let x=0;x<12;x++){ const ch=r[x]; if(ch==="."||ch===" ") continue;
+    g.fillStyle = col[ch]; g.fillRect(Math.floor(x*px), Math.floor(y*px), Math.ceil(px), Math.ceil(px)); } });
+  if(pose==="draw"){
+    // the gun arm, out of the shoulder toward the opponent: coat, a hand, then the iron
+    const y = 3 + 4, sx = 8;
+    const put=(x,yy,w,h,colr)=>{ g.fillStyle=colr; g.fillRect(Math.floor(x*px),Math.floor(yy*px),Math.ceil(w*px),Math.ceil(h*px)); };
+    put(sx,y,5,2,col.C); put(sx+5,y,1,2,col.S); put(sx+6,y,2,1,"#1C1611"); put(sx+6,y+1,1,1,"#1C1611");
+  }
+  spriteCache.set(key,c); return c;
+}
+
+/* ---- scene ---- */
+const cv = $("#street-canvas"), ctx = cv.getContext("2d");
+let W=0,H=0,T=0,HORIZON=0,STREET_TOP=0, facades=[], pebbles=[], dust=[];
+const BACKDROP = new Image(); BACKDROP.src = "/media/street.jpg";
+function resize(){
+  const dpr = Math.min(devicePixelRatio||1,2), r = cv.getBoundingClientRect();
+  W=r.width; H=r.height; cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.imageSmoothingEnabled=false;
+  HORIZON = H*0.40; STREET_TOP = H*0.56;
+  dust=[]; for(let k=0;k<Math.round(W/60);k++) dust.push({x:Math.random()*W,y:STREET_TOP+Math.random()*(H-STREET_TOP),z:Math.random()});
+  for(const c of S.hands.values()) placeHand(c, true);
+  spriteCache.clear();
+}
+addEventListener("resize", resize);
+
+function pxOf(c){
+  // stature from the stack: sqrt so a 4x stack reads as 2x taller, like the ladder
+  const top = Math.max(1, S.maxMass||1);
+  const s = 2.1 + 3.4*Math.sqrt(Math.max(0,c.mass)/top);
+  return Math.min(6.4, Math.max(2.1, s)) * Math.min(1, Math.max(0.62, W/900));
+}
+function placeHand(c, keep){
+  const m = 30;
+  if(!keep || c.hx==null){
+    c.hx = m + Math.random()*(W-2*m); c.hy = STREET_TOP + 18 + Math.random()*(H-STREET_TOP-40);
+  } else { c.hx = Math.min(W-m, Math.max(m, c.hx)); c.hy = Math.min(H-12, Math.max(STREET_TOP+18, c.hy)); }
+  if(c.x==null){ c.x=c.hx; c.y=c.hy; }
+}
+function relax(list){
+  // nudge hands apart so nobody stands inside anybody; feet are the anchor
+  for(let it=0;it<2;it++) for(let i=0;i<list.length;i++) for(let j=i+1;j<list.length;j++){
+    const a=list[i], b=list[j]; if(a.busy||b.busy) continue;
+    const dx=b.hx-a.hx, dy=(b.hy-a.hy)*2.2, d=Math.hypot(dx,dy)||0.01, min=(pxOf(a)+pxOf(b))*6.5;
+    if(d<min){ const push=(min-d)/2/d; a.hx-=dx*push; a.hy-=dy*push/2.2; b.hx+=dx*push; b.hy+=dy*push/2.2;
+      a.hx=Math.min(W-30,Math.max(30,a.hx)); b.hx=Math.min(W-30,Math.max(30,b.hx));
+      a.hy=Math.min(H-12,Math.max(STREET_TOP+18,a.hy)); b.hy=Math.min(H-12,Math.max(STREET_TOP+18,b.hy)); }
+  }
+}
+
+function drawScene(){
+  // the film's street at noon, scaled to cover the canvas; a warm wash keeps the hands readable on it
+  if(BACKDROP.complete && BACKDROP.naturalWidth){
+    const iw=BACKDROP.naturalWidth, ih=BACKDROP.naturalHeight, k=Math.max(W/iw, H/ih), dw=iw*k, dh=ih*k;
+    ctx.imageSmoothingEnabled=true; ctx.drawImage(BACKDROP, (W-dw)/2, (H-dh)*0.62, dw, dh); ctx.imageSmoothingEnabled=false;
+    const g=ctx.createLinearGradient(0,STREET_TOP-40,0,H); g.addColorStop(0,"rgba(212,187,139,0)"); g.addColorStop(1,"rgba(212,187,139,.28)");
+    ctx.fillStyle=g; ctx.fillRect(0,STREET_TOP-40,W,H-STREET_TOP+40);
+  } else {
+    ctx.fillStyle="#E7D5AE"; ctx.fillRect(0,0,W,STREET_TOP); ctx.fillStyle="#D4BB8B"; ctx.fillRect(0,STREET_TOP,W,H-STREET_TOP);
+  }
+  if(!reduced){ ctx.fillStyle="rgba(239,228,203,.55)";
+    for(const d of dust){ d.x+=0.12+d.z*0.25; if(d.x>W+4){ d.x=-4; d.y=STREET_TOP+Math.random()*(H-STREET_TOP); } ctx.fillRect(d.x,d.y,1.5+d.z,1); } }
+}
+
+function drawHand(c, isMe){
+  const t=c.t, px=pxOf(c);
+  const covered = c.shieldUntil>now(), resting = c.fatigueUntil>now();
+  const pose = c.pose||"idle";
+  const face = c.faceOverride ?? t.face;
+  const spr = spriteOf(t, px, pose, resting);
+  const w = spr.width, h = spr.height;
+  const bob = (!reduced && pose==="idle") ? Math.round(Math.sin(T*0.05+t.phase)*0.6) : 0;
+  const bodyW = 12*px;
+  // feet anchor at (x,y); the draw pose is wider on the gun side
+  const left = pose==="draw" ? (face>0 ? c.x-bodyW/2 : c.x-bodyW/2-8*px) : c.x-bodyW/2;
+  const top = c.y-h+bob;
+  ctx.save();
+  ctx.globalAlpha = c.fade ?? 1;
+  // shadow
+  ctx.fillStyle="rgba(28,22,17,.22)"; ctx.beginPath(); ctx.ellipse(c.x, c.y+1, bodyW*0.42, px*1.1, 0, 0, 6.283); ctx.fill();
+  if(face<0){ ctx.translate(left+w, top); ctx.scale(-1,1); ctx.drawImage(spr,0,0); }
+  else { ctx.drawImage(spr,left,top); }
+  ctx.restore();
+  // cover band: a red mark on the arm, the one thing that says "do not draw on me"
+  if(covered && !resting){ ctx.fillStyle="#B23A1B"; ctx.fillRect(c.x-bodyW/2+px*1.1, top+px*8.6, px*1.9, px*1.2); }
+  if(c.flash>0){ ctx.fillStyle=`rgba(239,228,203,${c.flash})`; ctx.fillRect(left-2, top-2, w+4, h+4); c.flash-=0.08; }
+  if(isMe || (S.found && c.owner.toLowerCase()===S.found)){
+    const label = isMe ? "YOU" : "FOUND";
+    ctx.fillStyle="#B23A1B"; ctx.font="600 10px 'IBM Plex Mono', monospace"; ctx.textAlign="center";
+    ctx.fillText(label, c.x, top-8);
+    ctx.fillRect(c.x-1.5, top-6, 3, 4);
+  }
+}
+
+/* ---- effects: muzzle flash, smoke, burning chips, the ETH tag ---- */
+function drawFx(){
+  for(const f of S.fx){
+    const p = f.life/f.max;
+    if(f.type==="flash"){
+      ctx.fillStyle=`rgba(255,246,214,${p})`; const L=f.len*(0.6+0.4*p);
+      ctx.fillRect(f.x+(f.dir>0?0:-L), f.y-2, L, 4); ctx.fillRect(f.x+(f.dir>0?L*0.3:-L*0.7), f.y-5, L*0.4, 10);
+    } else if(f.type==="smoke"){
+      f.x+=f.vx; f.y+=f.vy; f.vy-=0.02; f.vx*=0.98;
+      ctx.fillStyle=`rgba(90,80,70,${p*0.5})`; ctx.fillRect(f.x, f.y, f.s*(1+(1-p)*1.5), f.s*(1+(1-p)*1.5));
+    } else if(f.type==="chip"){
+      f.x+=f.vx; f.y+=f.vy; f.vy+=0.06; f.vx*=0.985;
+      if(f.y>f.floor){ f.y=f.floor; f.vy*=-0.35; f.vx*=0.7; }
+      const burn = p<0.55;
+      ctx.fillStyle = burn ? (p<0.25 ? `rgba(60,50,40,${p*3})` : `rgba(178,58,27,${Math.min(1,p*2)})`) : "#B8862E";
+      ctx.fillRect(f.x, f.y, f.s, f.s);
+      if(burn && !reduced && Math.random()<0.3){ S.fx.push({type:"ember",x:f.x,y:f.y,vx:(Math.random()-.5)*0.4,vy:-0.4-Math.random()*0.6,life:18+Math.random()*14|0,max:32,s:1+Math.random()}); }
+    } else if(f.type==="ember"){
+      f.x+=f.vx; f.y+=f.vy;
+      ctx.fillStyle=`rgba(178,58,27,${p})`; ctx.fillRect(f.x,f.y,f.s,f.s);
+    } else if(f.type==="text"){
+      f.y-=0.25;
+      ctx.font=`600 ${f.s||11}px 'IBM Plex Mono', monospace`; ctx.textAlign="center";
+      ctx.fillStyle=`rgba(239,228,203,${Math.min(1,p*2)*0.9})`; ctx.fillRect(f.x-ctx.measureText(f.str).width/2-5, f.y-11, ctx.measureText(f.str).width+10, 15);
+      ctx.fillStyle=`${f.color}${Math.min(1,p*2).toFixed(3)})`; ctx.fillText(f.str,f.x,f.y);
+    } else if(f.type==="ring"){
+      ctx.strokeStyle=`rgba(178,58,27,${p*0.8})`; ctx.lineWidth=1.5; ctx.beginPath(); ctx.ellipse(f.x,f.y,(1-p)*f.r,(1-p)*f.r*0.35,0,0,6.283); ctx.stroke();
+    }
+    f.life--;
+  }
+  S.fx = S.fx.filter(f=>f.life>0);
+}
+
+/* ---- hover / tap to read a hand ---- */
+let MOUSE=null;
+cv.addEventListener("mousemove",e=>{ if(!coarse) MOUSE={x:e.offsetX,y:e.offsetY}; });
+cv.addEventListener("mouseleave",()=>{ if(!coarse) MOUSE=null; });
+cv.addEventListener("click",e=>{ if(coarse){ MOUSE = MOUSE ? null : {x:e.offsetX,y:e.offsetY}; } });
+function hitTest(list){
+  if(!MOUSE) return null; let hit=null;
+  for(const c of list){ const px=pxOf(c), w=12*px, h=16*px; if(MOUSE.x>=c.x-w/2-4 && MOUSE.x<=c.x+w/2+4 && MOUSE.y>=c.y-h-4 && MOUSE.y<=c.y+6) hit=c; }
+  return hit;
+}
+function drawHover(list){
+  const hit=hitTest(list); S.hover=hit; if(!hit) return;
+  const covered=hit.shieldUntil>now(), resting=hit.fatigueUntil>now();
+  const lines=[ short(hit.owner)+(S.me&&hit.owner.toLowerCase()===S.me?"  (you)":""),
+    fmt(hit.mass)+" DRAW   "+hit.kills+" wins   "+hit.eth.toFixed(4)+" ETH",
+    resting ? "resting, out of the game for now" : covered ? "under cover, nobody can draw on this hand" : "exposed, faces hands 1.25x to 4x its size" ];
+  ctx.font="600 11px 'IBM Plex Mono', monospace"; ctx.textAlign="left";
+  const w=Math.max(...lines.map(l=>ctx.measureText(l).width))+20, h=lines.length*16+14;
+  let x=hit.x+40, y=hit.y-16*pxOf(hit)-h/2; if(x+w>W-6) x=hit.x-40-w; if(x<6) x=6; y=Math.max(6,Math.min(H-h-6,y));
+  ctx.fillStyle="#1C1611"; ctx.fillRect(x,y,w,h); ctx.fillStyle="#EFE4CB"; ctx.fillRect(x+2,y+2,w-4,h-4);
+  ctx.fillStyle="#1C1611"; lines.forEach((l,i)=>{ ctx.fillStyle=i===2&&covered?"#B23A1B":"#1C1611"; ctx.fillText(l,x+10,y+19+i*16); });
+}
+
+function frame(){
+  T++;
+  ctx.clearRect(0,0,W,H);
+  drawScene();
+  const list=[...S.hands.values()];
+  let mx=0; for(const c of list) if(c.mass>mx) mx=c.mass; S.maxMass=mx;
+  // walk: every hand eases toward its home (or its duel mark) with a strong ease-out
+  for(const c of list){
+    const tx=c.tx??c.hx, ty=c.ty??c.hy;
+    if(reduced){ c.x=tx; c.y=ty; continue; }
+    c.x+=(tx-c.x)*0.12; c.y+=(ty-c.y)*0.12;
+  }
+  relax(list);
+  list.sort((a,b)=>a.y-b.y); // far hands first
+  for(const c of list) drawHand(c, S.me && c.owner.toLowerCase()===S.me);
+  drawFx();
+  drawHover(list);
+  requestAnimationFrame(frame);
+}
+
+/* ---- ui ---- */
+function story(html){ const el=$("#story"); el.innerHTML=html; el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+function logLine(kind, html){
+  const li=document.createElement("li"); if(kind==="hit") li.className="hit";
+  li.innerHTML=`<span class="t">${new Date().toLocaleTimeString("en-US",{hour12:false})}</span><span>${html}</span>`;
+  const log=$("#log"); log.prepend(li); while(log.children.length>40) log.lastChild.remove();
+}
+function statusOf(c){
+  if(c.fatigueUntil>now()) return '<span class="status rest">resting</span>';
+  if(c.shieldUntil>now()) return '<span class="status cover">under cover</span>';
+  return '<span class="status muted">exposed</span>';
+}
+function renderTable(){
+  const list=[...S.hands.values()].sort((a,b)=>b.mass-a.mass).slice(0,20);
+  $("#tbl").innerHTML=list.map(c=>{ const me=S.me&&c.owner.toLowerCase()===S.me;
+    return `<tr class="${me?"you":""}"><td class="mono">${short(c.owner)}${me?" (you)":""}</td><td class="n">${fmt(c.mass)}</td><td class="n">${c.kills}</td><td class="n">${c.eth.toFixed(4)}</td><td>${statusOf(c)}</td></tr>`; }).join("");
+}
+function renderStats(){
+  $("#s-hands").textContent=fmt(S.hands.size);
+  $("#s-draws").textContent=fmt(S.stats.draws);
+  $("#s-burn").textContent=fmt(S.stats.burned);
+  $("#s-supply").textContent=fmt(S.stats.supply);
+  $("#s-bounty").textContent=S.stats.bounty.toFixed(3);
+}
+function setClock(html){ $("#clock").innerHTML=html; }
+
+/* ---- the duel, with the real rules ----
+   floor = max(5, 75% of peak); at risk = stack above the floor; 95% of it burns, 5% to the winner;
+   the winner drinks 20% of the bounty if 6 minutes passed since its last win; three wins in a row = 80 min rest;
+   the loser is under cover for 1 hour. */
+function atRiskOf(c){ const floor=Math.max(CFG.SAFE_FLOOR, c.peak*CFG.FLOOR_BPS/10000); return Math.max(0, c.mass-floor); }
+function validPairs(){
+  const l=[...S.hands.values()].filter(c=>c.shieldUntil<now() && c.fatigueUntil<now() && now()-c.born>=30).sort((a,b)=>a.mass-b.mass);
+  const pairs=[];
+  for(let i=0;i<l.length;i++) for(let j=i+1;j<l.length;j++){
+    const r=l[j].mass/l[i].mass; if(r>=1.25 && r<=4 && atRiskOf(l[i])>0 && now()-l[j].born>=300) pairs.push([l[j],l[i]]);
+  }
+  return pairs;
+}
+function startDuel(win, lose, quick, onDone){
+  if(S.duel) return false;
+  S.duel={win,lose};
+  win.busy=lose.busy=true;
+  const yL=STREET_TOP+(H-STREET_TOP)*0.62;
+  const leftFirst = win.x<=lose.x; const A=leftFirst?win:lose, B=leftFirst?lose:win;
+  A.tx=W*0.40; A.ty=yL; A.faceOverride=1; B.tx=W*0.60; B.ty=yL; B.faceOverride=-1;
+  // everybody else steps out of the lane between the two marks
+  for(const c of S.hands.values()){ if(c===win||c===lose||c.busy) continue;
+    if(Math.abs(c.hy-yL)<16*pxOf(c)*1.1+8 && c.hx>W*0.28 && c.hx<W*0.72){ c.hy = (c.hy<yL && yL-60>STREET_TOP+18) ? yL-16*pxOf(c)-10 : Math.min(H-12, yL+34); } }
+  const walk = reduced ? 0 : (quick ? 500 : 900);
+  const wait = reduced ? 0 : (quick ? 300 : 1400);
+  setTimeout(()=>{
+    story(`<b class="mono">${short(win.owner)}</b> and <b class="mono">${short(lose.owner)}</b> step into the street. The block seals the draw.`);
+    setTimeout(()=>{ fire(win,lose); onDone && onDone(); setTimeout(()=>endDuel(win,lose), reduced?0:1600); }, wait);
+  }, walk);
+  return true;
+}
+function fire(win, lose){
+  win.pose="draw"; win.flash=0; lose.flash=0.9;
+  const px=pxOf(win), dir=win.faceOverride??win.t.face;
+  const gx = win.x + dir*(px*6+px*8), gy = win.y - 16*px + px*7.5;
+  S.fx.push({type:"flash",x:gx,y:gy,len:px*9,dir,life:7,max:7});
+  if(!reduced){ for(let i=0;i<8;i++) S.fx.push({type:"smoke",x:gx+dir*4,y:gy,vx:dir*(0.3+Math.random()*0.8),vy:-0.2-Math.random()*0.5,s:2+Math.random()*3,life:30+Math.random()*20|0,max:50}); }
+  // the hit knocks the loser back a step
+  if(!reduced){ lose.tx = lose.x - (lose.faceOverride??lose.t.face)*px*4; }
+}
+function endDuel(win, lose){
+  win.pose="idle"; win.faceOverride=null; lose.faceOverride=null; win.tx=win.ty=lose.tx=lose.ty=null;
+  win.busy=lose.busy=false; S.duel=null;
+}
+function settle(win, lose, burned, prize){
+  // what the eyes need: chips fly out of the loser and burn on the ground, a tag over each hand
+  const px=pxOf(lose), n=reduced?0:Math.min(40, 10+Math.round(burned/40));
+  for(let i=0;i<n;i++) S.fx.push({type:"chip",x:lose.x+(Math.random()-.5)*px*6,y:lose.y-px*8,vx:(Math.random()-.5)*2.4,vy:-1-Math.random()*2.2,s:2+Math.random()*2,floor:lose.y+Math.random()*10,life:70+Math.random()*40|0,max:110});
+  S.fx.push({type:"ring",x:lose.x,y:lose.y,r:60,life:26,max:26});
+  S.fx.push({type:"text",str:"-"+fmt(burned)+" DRAW burned",x:lose.x,y:lose.y-16*px-14,color:"rgba(178,58,27,",life:110,max:110});
+  if(prize>0) S.fx.push({type:"text",str:"+"+prize.toFixed(4)+" ETH",x:win.x,y:win.y-16*pxOf(win)-14,color:"rgba(28,22,17,",life:110,max:110});
+  setTimeout(()=>{ if(S.hands.has(lose.id)) S.fx.push({type:"text",str:"under cover 1 h",x:lose.x,y:lose.y-16*px-14,color:"rgba(178,58,27,",life:90,max:90,s:10}); }, 900);
+}
+
+/* ---- sample street (before the contract is set) ---- */
+const randAddr=()=>{let s="0x";for(let i=0;i<40;i++)s+="0123456789abcdef"[Math.random()*16|0];return s;};
+function seedHand(owner, mass, bornAgo){
+  const c={id:owner,owner,mass,peak:mass,kills:0,eth:0,shieldUntil:0,fatigueUntil:0,streak:0,lastWin:0,born:now()-(bornAgo??3600),t:traitsOf(owner),flash:0,pose:"idle"};
+  placeHand(c,false); S.hands.set(owner,c); return c;
+}
+function simInit(){
+  const N=34;
+  for(let i=0;i<N;i++){
+    const m=60*Math.pow(1.13,i)*(0.75+Math.random()*0.6);
+    const c=seedHand(randAddr(), m, 600+Math.random()*80000);
+    if(Math.random()<0.15) c.shieldUntil=now()+Math.random()*3600;
+    if(Math.random()<0.35) c.kills=1+(Math.random()*4|0);
+    c.eth = c.kills ? Math.random()*0.05 : 0;  // only winners hold ETH
+  }
+  S.stats.bounty=0.318; S.stats.supply=100000-1860; S.stats.burned=1860; S.stats.draws=41;
+  renderStats(); renderTable();
+  logLine("", `<b>${S.hands.size}</b> hands on the street.`);
+}
+function simBuy(){
+  const mass=70+Math.pow(Math.random(),2.2)*2400, c=seedHand(randAddr(),mass,0);
+  c.fade=0; const t=setInterval(()=>{ c.fade=Math.min(1,(c.fade??0)+.08); if(c.fade>=1){ delete c.fade; clearInterval(t);} },30);
+  S.stats.bounty+=0.003+Math.random()*0.012;
+  logLine("",`<b class="mono">${short(c.owner)}</b> bought in with <span class="num">${fmt(mass)}</span> DRAW`);
+  while(S.hands.size>44){ const weakest=[...S.hands.values()].filter(h=>!h.busy).sort((a,b)=>a.mass-b.mass)[0]; if(!weakest) break;
+    S.hands.delete(weakest.id); logLine("",`<b class="mono">${short(weakest.owner)}</b> sold out and left the street`); }
+  renderStats(); renderTable();
+}
+function simDraw(){
+  const pairs=validPairs(); if(!pairs.length || S.duel){ story("No two hands within reach of each other. The draw waits."); return; }
+  const [win,lose]=pairs[Math.random()*pairs.length|0];
+  startDuel(win,lose,false,()=>{
+    const risk=atRiskOf(lose); const burned=risk*CFG.BURN_BPS/10000, gained=risk-burned;
+    lose.mass-=risk; win.mass+=gained; win.peak=Math.max(win.peak,win.mass); win.kills++;
+    lose.shieldUntil=now()+CFG.SHIELD_S; lose.streak=0;
+    let prize=0; if(!win.lastWin || now()-win.lastWin>=CFG.KILL_COOLDOWN_S){ prize=S.stats.bounty*CFG.BOUNTY_DRAW_BPS/10000; S.stats.bounty-=prize; win.eth+=prize; win.lastWin=now(); }
+    const inherit=lose.eth*0.7, spore=lose.eth*0.1; win.eth+=inherit; S.stats.bounty+=lose.eth-inherit-spore; lose.eth=0;
+    win.streak++; if(win.streak>=CFG.STREAK_MAX){ win.streak=0; win.fatigueUntil=now()+CFG.FATIGUE_S; win.shieldUntil=win.fatigueUntil; }
+    S.stats.draws++; S.stats.burned+=burned; S.stats.supply-=burned;
+    settle(win,lose,burned,prize);
+    story(`<b class="mono">${short(win.owner)}</b> outdrew <b class="mono">${short(lose.owner)}</b>. <b>${fmt(burned)} DRAW</b> burned. Winner takes <b>${prize.toFixed(4)} ETH</b>. The loser is under cover for an hour.`);
+    logLine("hit",`<b class="mono">${short(win.owner)}</b> outdrew <b class="mono">${short(lose.owner)}</b>, <span class="num">${fmt(burned)}</span> DRAW burned, <span class="num">${prize.toFixed(4)}</span> ETH to the winner`);
+    renderStats(); renderTable();
+  });
+}
+function simLoop(){
+  setInterval(()=>{ if(Math.random()<0.5) simBuy(); }, 5200);
+  setInterval(()=>{ if(--S.nextDraw<=0){ simDraw(); S.nextDraw=12; } setClock(`next draw in <b>${S.nextDraw} s</b>`); }, 1000);
+}
+
+/* ---- live street (after the contract is set) ---- */
+async function livePoll(){
+  try{
+    S.stats.supply=Number(await callU(SEL.totalSupply, CFG.TOKEN||CFG.CONTRACT)/10n**18n);
+    S.stats.burned=Number(await callU(SEL.totalBurned)/10n**18n);
+    S.stats.draws=Number(await callU(SEL.totalEats));
+    S.stats.bounty=Number(await callU(SEL.bountyPool))/1e18;
+    let bucket=126,cursor=0n,done=false,seen=new Set(),guard=0;
+    while(!done && guard++<12){
+      const p=decodeHandPage(await ethCall(SEL.handPage+pad32(bucket)+pad32(cursor)+pad32(80)));
+      p.ids.forEach((id,i)=>{
+        const mass=Number(p.masses[i]/10n**14n)/1e4;
+        let c=S.hands.get(id);
+        if(!c){ c={id,owner:p.owners[i],mass,peak:mass,kills:p.kills[i],eth:0,shieldUntil:0,fatigueUntil:0,born:0,t:traitsOf(p.owners[i]),flash:0,pose:"idle"}; placeHand(c,false); S.hands.set(id,c); }
+        c.mass=mass; c.peak=Math.max(c.peak,mass); c.kills=p.kills[i]; c.eth=Number(p.eth[i])/1e18; seen.add(id);
+      });
+      bucket=p.nextBucket; cursor=p.nextCursor; done=p.done;
+    }
+    for(const id of [...S.hands.keys()]) if(!seen.has(id) && !S.hands.get(id).busy) S.hands.delete(id);
+    renderStats(); renderTable();
+  }catch(e){ /* transient RPC hiccup, the next poll retries */ }
+}
+let lastBlock=null;
+async function livePollLogs(){
+  try{
+    const head=parseInt(await rpc("eth_blockNumber",[]),16);
+    if(lastBlock===null) lastBlock=head-200;
+    if(head<=lastBlock) return;
+    const logs=await rpc("eth_getLogs",[{address:CFG.CONTRACT,fromBlock:"0x"+(lastBlock+1).toString(16),toBlock:"0x"+head.toString(16),
+      topics:[[TOPIC.Eaten,TOPIC.Spawned,TOPIC.Husked,TOPIC.Shielded]]}]);
+    lastBlock=head;
+    for(const L of logs){
+      const t0=L.topics[0], d=wordsOf(L.data);
+      const predId="0x"+L.topics[1].slice(2), preyId="0x"+(L.topics[2]||"").slice(2);
+      if(t0===TOPIC.Eaten){
+        const burned=Number(big(d[1])/10n**14n)/1e4;
+        const win=S.hands.get(predId), lose=S.hands.get(preyId);
+        const wa=short("0x"+L.topics[1].slice(26)), la=short("0x"+L.topics[2].slice(26));
+        if(win&&lose){ startDuel(win,lose,true,()=>{ settle(win,lose,burned,0); lose.shieldUntil=now()+CFG.SHIELD_S; }); }
+        story(`<b class="mono">${wa}</b> outdrew <b class="mono">${la}</b>. <b>${fmt(burned)} DRAW</b> burned. The loser is under cover for an hour.`);
+        logLine("hit",`<b class="mono">${wa}</b> outdrew <b class="mono">${la}</b>, <span class="num">${fmt(burned)}</span> DRAW burned`);
+      } else if(t0===TOPIC.Spawned){ logLine("",`<b class="mono">${short("0x"+L.topics[2].slice(26))}</b> bought in and stepped onto the street`); }
+      else if(t0===TOPIC.Husked){ logLine("",`<b class="mono">${short("0x"+L.topics[2].slice(26))}</b> left the street`); }
+      else if(t0===TOPIC.Shielded){ const c=S.hands.get(predId); if(c) c.shieldUntil=Number(big(d[0])); logLine("",`<b class="mono">${short("0x"+L.topics[2].slice(26))}</b> is under cover for an hour`); }
+    }
+  }catch{ /* transient */ }
+}
+async function liveClock(){
+  try{ const [due, pending]=await Promise.all([ethCall(SEL.eatsDue), ethCall(SEL.pendingEats)]);
+    const isDue=big(wordsOf(due)[0])===1n, n=Number(big(wordsOf(pending)[0]));
+    setClock(isDue ? `a round of <b>${n}</b> is due, it settles with the next trade` : n>0 ? `<b>${n}</b> armed, the round settles within 12 s` : `waiting for <b>volume</b>`); }catch{}
+}
+
+/* ---- wallet ---- */
+/* the wallet onto Base (8453): switch, or add it first when the wallet does not know it yet */
+async function ensureBase(){
+  try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x2105"}]}); }
+  catch(e){
+    if(e && (e.code===4902 || /unrecognized|not added|unknown chain/i.test(e.message||""))){
+      try{ await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:"0x2105",chainName:"Base",
+        nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18},rpcUrls:["https://mainnet.base.org"],blockExplorerUrls:["https://basescan.org"]}]}); }catch{}
+    }
+  }
+}
+async function connectWallet(){
+  if(!window.ethereum){ story("No wallet found in this browser. Paste your address in the box under the standings instead."); return; }
+  try{
+    const acc=await window.ethereum.request({method:"eth_requestAccounts"});
+    S.me=acc[0].toLowerCase();
+    for(const b of [$("#connect"),$("#connect-m")]) b.textContent=short(acc[0]);
+    await ensureBase();
+    renderTable();
+    const mine=[...S.hands.values()].find(c=>c.owner.toLowerCase()===S.me);
+    story(mine ? "Your hand is marked on the street." : "Connected. Buy DRAW and your hand steps onto the street.");
+    $("#yours-connect").textContent = short(acc[0]); refreshYours();
+  }catch{ story("Connection cancelled."); }
+}
+$("#connect").addEventListener("click",connectWallet);
+$("#connect-m").addEventListener("click",connectWallet);
+$("#find").addEventListener("input",e=>{ const v=e.target.value.trim().toLowerCase(); S.found=/^0x[0-9a-f]{40}$/.test(v)?v:null;
+  if(S.found){ const c=[...S.hands.values()].find(h=>h.owner.toLowerCase()===S.found); story(c?"Found. The hand is marked on the street.":"That wallet is not on the street."); } });
+
+/* ---- your hand: what you hold, what you won, and the claim buttons ----
+   The ETH a hand wins (the bounty prize and what the loser had banked) stays in the contract until the owner claims
+   it with claimEth(), and only once the hand is one hour old. A hand that lost a draw keeps a spore (claimSpore()).
+   ETH the contract could not deliver is held for the wallet (claimEscrow()). */
+const Y = { stack:0n, won:0n, spore:0n, escrow:0n, born:0, shield:0, reclaimAt:0, busy:false };
+const fmtEth = w => (Number(w)/1e18).toFixed(4);
+async function refreshYours(){
+  if(!S.me) return;
+  $("#yours-empty").hidden = true; $("#yours-body").hidden = false;
+  const mine = [...S.hands.values()].find(c=>c.owner.toLowerCase()===S.me);
+  if(!LIVE){
+    $("#y-stack").textContent = mine ? fmt(mine.mass) : "0";
+    $("#y-wins").textContent = mine ? mine.kills : 0;
+    $("#y-status").textContent = mine ? "on the street" : "off the street";
+    $("#y-eth").textContent = mine ? mine.eth.toFixed(4) : "0.0000";
+    $("#y-claim").disabled = true;
+    $("#y-claim-why").textContent = mine ? "Claimable once your hand is one hour old." : "Buy DRAW and your hand steps onto the street.";
+    $("#y-spore-row").hidden = true; $("#y-escrow-row").hidden = true;
+    return;
+  }
+  try{
+    const id = pad32(S.me), addr = pad32(S.me);
+    const [bal, won, spore, escrow, born, shield, credit] = await Promise.all([
+      callU(SEL.balanceOf+addr, CFG.TOKEN||CFG.CONTRACT), callU(SEL.handEth+id), callU(SEL.bloodClaimable+addr),
+      callU(SEL.ethEscrow+addr), callU(SEL.firstBornAt+id), callU(SEL.shieldUntil+id), callU(SEL.reclaimableAt+id)]);
+    Y.reclaimAt = Number(credit);
+    const pageWei = mine ? BigInt(Math.floor(mine.eth*1e18)) : 0n;
+    Y.stack=bal; Y.won = pageWei > won ? pageWei : won;
+    Y.spore=spore; Y.escrow=escrow; Y.born=Number(born); Y.shield=Number(shield);
+    // the chain's clock, not the visitor's: a hand's age and the claim window are measured in block time
+    const blk = await rpc("eth_getBlockByNumber",["latest",false]); Y.chainNow = parseInt(blk.timestamp,16);
+  }catch{ return; }
+  const tnow = Y.chainNow || now();
+  $("#y-stack").textContent = fmt(Number(Y.stack/10n**14n)/1e4);
+  $("#y-wins").textContent = mine ? mine.kills : 0;
+  $("#y-status").textContent = !mine ? "off the street" : (Y.shield>tnow ? "under cover" : "exposed");
+  $("#y-eth").textContent = fmtEth(Y.won);
+  const warmAt = Y.born ? Y.born + 3600 : 0, warm = Y.born && tnow >= warmAt;
+  const claim=$("#y-claim"), why=$("#y-claim-why");
+  if(Y.busy){ claim.disabled = true; }
+  else if(!mine){ claim.disabled = true; why.textContent = "You need a hand on the street to claim."; }
+  else if(Y.won===0n){ claim.disabled = true; why.textContent = (mine.kills>0) ? "All claimed. Win another draw and the ETH shows here." : "Nothing won yet. Win a draw and the ETH shows here."; }
+  else if(!warm){ claim.disabled = true; const m=Math.ceil((warmAt-tnow)/60); why.textContent = "Claimable in "+m+" min, once your hand is one hour old."; }
+  else {
+    claim.disabled = false;
+    const left = Y.reclaimAt ? Y.reclaimAt - tnow : 3600;
+    const mins = Math.max(0, Math.ceil(left/60));
+    why.textContent = left > 0
+      ? "Claim within "+mins+(mins===1?" minute":" minutes")+", or it goes back to the protocol."
+      : "The protocol can collect it at any moment. Claim it now.";
+  }
+  $("#y-spore-row").hidden = Y.spore===0n; $("#y-spore-why").textContent = fmtEth(Y.spore)+" ETH kept from a lost draw.";
+  $("#y-escrow-row").hidden = Y.escrow===0n; $("#y-escrow-why").textContent = fmtEth(Y.escrow)+" ETH held for your wallet.";
+}
+async function sendClaim(data, label){
+  if(!window.ethereum || !S.me || !LIVE) return;
+  Y.busy = true; refreshYours();
+  try{
+    await ensureBase();
+    const hash = await window.ethereum.request({method:"eth_sendTransaction",params:[{from:S.me,to:CFG.CONTRACT,data}]});
+    const link = '<a href="https://basescan.org/tx/'+hash+'" target="_blank" rel="noopener">See it on Basescan</a>.';
+    $("#y-tx").innerHTML = label+" sent. "+link;
+    for(let i=0;i<40;i++){
+      await new Promise(r=>setTimeout(r,3000));
+      const rc = await rpc("eth_getTransactionReceipt",[hash]).catch(()=>null);
+      if(rc){ $("#y-tx").innerHTML = (rc.status==="0x1" ? label+" done. " : label+" failed. ")+link; break; }
+    }
+  }catch(e){ $("#y-tx").textContent = e && e.code===4001 ? "Cancelled in your wallet." : "The wallet refused: "+(e&&e.message?e.message.slice(0,120):"unknown error"); }
+  Y.busy = false; refreshYours();
+}
+$("#y-claim").addEventListener("click",()=>sendClaim(SEL.claimEth,"Claim"));
+$("#y-spore").addEventListener("click",()=>sendClaim(SEL.claimSpore,"Spore claim"));
+$("#y-escrow").addEventListener("click",()=>sendClaim(SEL.claimEscrow,"Held ETH claim"));
+$("#yours-connect").addEventListener("click",()=>connectWallet());
+setInterval(refreshYours, 6000);
+
+/* ---- the film ---- */
+(function(){
+  const v=$("#film"), b=$("#film-sound"); if(!v||!b) return;
+  if(reduced){ v.removeAttribute("autoplay"); v.pause(); v.controls=true; b.hidden=true; return; }
+  b.addEventListener("click",()=>{ v.muted=!v.muted; if(!v.muted){ v.currentTime=0; v.play().catch(()=>{}); }
+    b.textContent=v.muted?"Sound on":"Sound off"; b.setAttribute("aria-pressed", String(!v.muted)); });
+})();
+
+/* ---- boot ---- */
+resize();
+if(LIVE){
+  const uni=CFG.TRADE_URL||("https://app.uniswap.org/swap?chain=base&outputCurrency="+(CFG.TOKEN||CFG.CONTRACT));
+  for(const id of ["buy-top","buy-top-m","buy-hero"]){ const a=document.getElementById(id); a.href=uni; a.removeAttribute("aria-disabled"); a.target="_blank"; a.rel="noopener"; }
+  const fc=$("#foot-ca"); fc.hidden=false; fc.textContent="Token "+(CFG.TOKEN||CFG.CONTRACT)+(CFG.TOKEN?"  Game "+CFG.CONTRACT:"");
+  $("#board-note").textContent="Read straight from the contract. Standings refresh every few seconds.";
+  $("#street-sub").textContent="Bigger stacks stand taller. A hand under cover wears a red band. Hover a hand to read it.";
+  livePoll(); livePollLogs(); liveClock();
+  setInterval(livePoll,6000); setInterval(livePollLogs,4000); setInterval(liveClock,4000);
+} else {
+  simInit(); simLoop(); window.simDraw = simDraw;
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
