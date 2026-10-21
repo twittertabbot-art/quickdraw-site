@@ -52,6 +52,10 @@ nav a:hover,nav button:hover{background:var(--paper-2)}
 .btn.primary{background:var(--ink);color:var(--paper)}
 .btn.primary:hover{background:var(--rust);border-color:var(--rust)}
 .btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.btn.accent{background:var(--rust);border-color:var(--rust);color:var(--paper)}
+@media(hover:hover) and (pointer:fine){.btn.accent:hover{background:var(--ink);border-color:var(--ink)}}
+.mast-m{display:flex;align-items:center;gap:8px}
+@media(min-width:768px){.mast-m{display:none}}
 details.menu{position:relative}
 details.menu summary{list-style:none;font-family:var(--mono);font-size:.84rem;padding:10px 14px;min-height:44px;display:inline-flex;align-items:center;border:2px solid var(--ink);border-radius:3px;cursor:pointer}
 details.menu summary::-webkit-details-marker{display:none}
@@ -173,11 +177,13 @@ footer .mono{word-break:break-all}
       <a href="#street">The street</a>
       <a href="#rules">How it works</a>
       <a href="#money">The money</a>
-      <a href="/duel">Showdown</a>
       <a href="/rules">Rules</a>
+      <a class="btn accent" href="/duel">1v1 Showdown</a>
       <a id="buy-top" class="btn" href="#" aria-disabled="true">Buy DRAW</a>
       <button id="connect" class="btn primary" type="button">Connect wallet</button>
     </nav>
+    <div class="mast-m">
+    <a class="btn accent" href="/duel" aria-label="1v1 Showdown" style="white-space:nowrap">1v1</a>
     <details class="menu">
       <summary aria-label="Open menu">Menu</summary>
       <div class="sheet">
@@ -190,6 +196,7 @@ footer .mono{word-break:break-all}
         <button id="connect-m" type="button">Connect wallet</button>
       </div>
     </details>
+    </div>
   </div>
 </header>
 
@@ -202,6 +209,7 @@ footer .mono{word-break:break-all}
       <p class="lede">Every holder stands on one street. Trading arms a draw. The block picks two hands of similar size, and the bigger one draws first. The loser gives up part of their stack. Most of it burns. The winner takes ETH.</p>
       <div class="cta">
         <a id="buy-hero" class="btn primary" href="#" aria-disabled="true">Buy DRAW</a>
+        <a class="btn accent" href="/duel">1v1 Showdown</a>
         <a class="btn" href="/rules">Read the rules</a>
       </div>
       <p class="note" style="margin-top:18px">No staking. No deposit. Nothing to approve. Your balance is your stack, and selling takes you off the street.</p>

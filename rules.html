@@ -31,6 +31,7 @@ header{border-bottom:2px solid var(--ink)}
 .wordmark span{color:var(--rust)}
 .mast a.back{font-family:var(--mono);font-size:.84rem;text-decoration:none;padding:10px 14px;min-height:44px;display:inline-flex;align-items:center;border:2px solid var(--ink);border-radius:3px;white-space:nowrap;transition:transform 160ms var(--ease-out)}
 .mast a.back:active{transform:scale(.97)}
+.mast a.back.accent{background:var(--rust);border-color:var(--rust);color:var(--paper)}
 @media(max-width:479px){.hide-s{display:none !important}}
 .lead{padding:44px 0 32px;display:grid;gap:14px;max-width:46em}
 @media(min-width:768px){.lead{padding:64px 0 44px}}
@@ -60,7 +61,7 @@ footer{border-top:2px solid var(--ink);padding:28px 0 40px;font-size:.9rem;color
 </style>
 </head>
 <body>
-<header><div class="wrap mast"><a class="wordmark" href="/">QUICK<span>DRAW</span></a><span style="display:flex;gap:8px"><a class="back" href="/duel">Showdown</a><a class="back hide-s" href="/">The street</a></span></div></header>
+<header><div class="wrap mast"><a class="wordmark" href="/">QUICK<span>DRAW</span></a><span style="display:flex;gap:8px"><a class="back accent" href="/duel">1v1 Showdown</a><a class="back hide-s" href="/">The street</a></span></div></header>
 
 <main>
 <div class="wrap lead">
