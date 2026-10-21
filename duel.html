@@ -96,6 +96,9 @@ hr.rule{border:0;border-top:2px solid var(--ink);margin:0}
 .status{font-size:.88rem;color:var(--ink-2);margin-top:10px;min-height:1.4em}
 .status a{color:var(--rust)}
 .wallet-line{font-size:.9rem;color:var(--ink-2);margin-top:10px}
+.tg-take{border:2px solid var(--rust);background:var(--paper);padding:12px 14px;margin-bottom:16px}
+.tg-take p{font-size:.95rem;margin-bottom:10px}
+.tg-take .btn{width:100%}
 
 table{width:100%;border-collapse:collapse;font-size:.9rem}
 th{text-align:left;font-family:var(--mono);font-weight:600;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);padding:6px 8px 8px 0;border-bottom:2px solid var(--ink);white-space:nowrap}
@@ -188,6 +191,7 @@ footer .mono{word-break:break-all}
     </div>
     <div class="desk-grid">
       <div class="post">
+        <div class="tg-take" id="tg-take" hidden></div>
         <h3>Post a challenge</h3>
         <label for="amt">Your bet in DRAW</label>
         <div class="amt"><input id="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="100" aria-describedby="calc"><button id="max" class="btn" type="button">Max</button></div>
@@ -270,6 +274,7 @@ const CFG = {
   RPCS: ["https://base-rpc.publicnode.com","https://mainnet.base.org","https://base.drpc.org"],
   CHAIN_ID: 8453,
   MIN_BET: 10, BURN_BPS: 1000, SAFE_FLOOR: 5,
+  TG_BOT: "QuickdrawShowdownBot", // the Telegram bot's username (no @), for the "Back to Telegram" link
 };
 const SEL = {
   create:"0x780900dc", accept:"0x19b05f49", cancel:"0x40e58ee5", settle:"0x8df82800",
@@ -287,6 +292,14 @@ const ERR = {
 };
 const LIVE = !!(CFG.DUEL && CFG.TOKEN);
 const ONE = 10n**18n;
+// Links from the Telegram bot: ?amount=500 prefills a challenge, ?take=12 shows that duel on top, ?t=<tag> is the
+// player's personal tag. The tag rides at the END of the create / accept call data ("QD1:" + tag, ASCII): the duel
+// contract reads only the bytes it needs and ignores the rest, and the bot reads the tag back from the transaction to
+// know which Telegram player and which group the duel belongs to. Nothing else is sent anywhere.
+const Q = new URLSearchParams(location.search);
+const TG_TAG = /^[A-Za-z0-9_-]{8,64}$/.test(Q.get("t") || "") ? Q.get("t") : "";
+const TAG_HEX = TG_TAG ? "5144313a" + [...TG_TAG].map(c => c.charCodeAt(0).toString(16).padStart(2, "0")).join("") : "";
+const TAKE_ID = /^\d{1,12}$/.test(Q.get("take") || "") ? BigInt(Q.get("take")) : null;
 const $ = s => document.querySelector(s);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const short = a => a.slice(0,6)+"..."+a.slice(-4);
@@ -434,7 +447,22 @@ function render(){
   }).join("");
   // tally under the scene
   if(D.stats.settled > 0n) $("#tally").textContent = `${D.stats.settled} ${D.stats.settled === 1n ? "duel" : "duels"} settled, ${fmtDraw(D.stats.burned,0)} DRAW burned`;
-  renderForm();
+  renderForm(); renderTake();
+}
+
+// a challenge opened from Telegram (?take=<id>): shown on top of the panel with its own Take button
+function renderTake(){
+  const box = $("#tg-take"); if(TAKE_ID === null){ box.hidden = true; return; }
+  const all = D.open.concat(D.live, D.done, D.mine), d = all.find(x => x.id === TAKE_ID);
+  box.hidden = false;
+  if(!LIVE){ box.innerHTML = "<p>Duel #" + TAKE_ID + " from Telegram.</p>"; return; }
+  if(d && d.status === "open"){
+    const mine = D.me && d.creator === D.me;
+    box.innerHTML = `<p>Duel #${d.id} from Telegram: <b class="mono">${short(d.creator)}</b> bets ${fmtDraw(d.amount)} DRAW. The winner gets ${fmtDraw(winOf(d.amount))}.</p>` +
+      (mine ? `<p>This is your own challenge. Someone else has to take it.</p>` : `<button class="btn accent" data-act="take" data-id="${d.id}" type="button">Take it for ${fmtDraw(d.amount)} DRAW</button>`);
+  } else if(d){
+    box.innerHTML = `<p>Duel #${d.id} is ${d.status === "live" ? "already facing off. Somebody took it first" : d.status === "cancelled" ? "cancelled" : "settled"}.</p>`;
+  } else box.innerHTML = `<p>Looking up duel #${TAKE_ID}.</p>`;
 }
 
 function renderForm(){
@@ -504,7 +532,9 @@ async function send(to, data, label){
   for(let i=0;i<60;i++){
     await new Promise(r=>setTimeout(r,2000));
     const rc = await rpc("eth_getTransactionReceipt",[hash]).catch(()=>null);
-    if(rc){ if(rc.status !== "0x1") throw {message: label + " failed on chain."}; say(esc(label) + " done." + link); return; }
+    if(rc){ if(rc.status !== "0x1") throw {message: label + " failed on chain."};
+      const back = TG_TAG && CFG.TG_BOT ? ' <a href="https://t.me/' + CFG.TG_BOT + '">Back to Telegram</a>.' : "";
+      say(esc(label) + " done." + link + back); return; }
   }
   throw {message:"No receipt yet. Check the transaction on Basescan."};
 }
@@ -524,7 +554,7 @@ $("#post").addEventListener("click", () => act(async () => {
   const bet = parseDraw($("#amt").value);
   if(bet === null || bet < BigInt(CFG.MIN_BET) * ONE) throw {message:"The smallest bet is 10 DRAW."};
   await withAllowance(bet);
-  await send(CFG.DUEL, SEL.create + pad32(bet), "Challenge for " + fmtDraw(bet) + " DRAW");
+  await send(CFG.DUEL, SEL.create + pad32(bet) + TAG_HEX, "Challenge for " + fmtDraw(bet) + " DRAW");
 }));
 document.addEventListener("click", e => {
   const b = e.target.closest("button[data-act]"); if(!b) return;
@@ -534,7 +564,7 @@ document.addEventListener("click", e => {
     const d = D.open.find(x => x.id === id); if(!d) throw {message:"That challenge is no longer open."};
     if(d.amount > D.bal) throw {message:"You need " + fmtDraw(d.amount) + " DRAW to take this challenge."};
     await withAllowance(d.amount);
-    await send(CFG.DUEL, SEL.accept + pad32(id), "Taking the challenge");
+    await send(CFG.DUEL, SEL.accept + pad32(id) + TAG_HEX, "Taking the challenge");
   });
   if(kind === "cancel") act(() => send(CFG.DUEL, SEL.cancel + pad32(id), "Cancel"));
   if(kind === "settle") act(() => send(CFG.DUEL, SEL.settle + pad32(id), "Settle"));
@@ -683,7 +713,8 @@ function idleShow(){
 }
 
 /* ---- boot ---- */
-resize(); requestAnimationFrame(frame); renderForm();
+if(Q.get("amount") && parseDraw(Q.get("amount")) !== null) $("#amt").value = Q.get("amount");
+resize(); requestAnimationFrame(frame); renderForm(); renderTake();
 if(LIVE){
   const fc = $("#foot-ca"); fc.hidden = false;
   fc.innerHTML = 'Duel contract <a href="https://basescan.org/address/'+CFG.DUEL+'" target="_blank" rel="noopener">'+CFG.DUEL+'</a>';
