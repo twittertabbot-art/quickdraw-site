@@ -196,6 +196,7 @@ footer .mono{word-break:break-all}
         <label for="amt">Your bet in DRAW</label>
         <div class="amt"><input id="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="100" aria-describedby="calc"><button id="max" class="btn" type="button">Max</button></div>
         <div class="calc" id="calc"><span>If you win</span><span id="c-win">180 DRAW</span><span>Burned either way</span><span id="c-burn">20 DRAW</span></div>
+        <p class="wallet-line" id="priv-note" hidden>Private to your Telegram group. Only members the bot gives the link to can take it, and it stays off the public lists.</p>
         <div class="warn" id="warn" hidden></div>
         <button id="post" class="btn primary go" type="button" disabled>Post challenge</button>
         <div class="status" id="post-status" aria-live="polite"></div>
@@ -281,6 +282,7 @@ const SEL = {
   openDuels:"0xb77c4a9b", liveDuels:"0x0759109d", duelsOf:"0x720e408b", getDuels:"0x957d04a4",
   duelCount:"0xbedfa46e", totalBurned:"0xd89135cd", totalSettled:"0xeace4c91", totalVolume:"0x5f81a57c",
   ready:"0x6defbf80", outcome:"0x5a11492a", duelCountOf:"0x0ccdac1b",
+  createPrivate:"0x389e876b", acceptWithCode:"0x893c7639", privateFlags:"0xc401dacb",
   approve:"0x095ea7b3", allowance:"0xdd62ed3e", balanceOf:"0x70a08231", handEth:"0xede83090",
 };
 const ERR = {
@@ -289,6 +291,7 @@ const ERR = {
   "0xddafad98":"That challenge is no longer open. Someone took it or it was cancelled.", "0xbaf13b3f":"That duel is already settled.",
   "0x93687c0b":"Only the challenger can cancel.", "0xfcc8c860":"You cannot take your own challenge.",
   "0x085de625":"The three seed blocks do not all exist yet. Try again in a few seconds.",
+  "0x3407affe":"That duel is private to a Telegram group. Take it from the group's link.", "0x9e3ba915":"This private duel's link is not valid. Ask the bot for a new one.",
 };
 const LIVE = !!(CFG.DUEL && CFG.TOKEN);
 const ONE = 10n**18n;
@@ -300,6 +303,9 @@ const Q = new URLSearchParams(location.search);
 const TG_TAG = /^[A-Za-z0-9_-]{8,64}$/.test(Q.get("t") || "") ? Q.get("t") : "";
 const TAG_HEX = TG_TAG ? "5144313a" + [...TG_TAG].map(c => c.charCodeAt(0).toString(16).padStart(2, "0")).join("") : "";
 const TAKE_ID = /^\d{1,12}$/.test(Q.get("take") || "") ? BigInt(Q.get("take")) : null;
+// Private duels (made for one Telegram group): ?p=<hash of the one-time code> posts one, ?c=<the code> takes one.
+const PRIV_HASH = /^[0-9a-fA-F]{64}$/.test(Q.get("p") || "") ? Q.get("p").toLowerCase() : "";
+const PRIV_CODE = /^[0-9a-fA-F]{64}$/.test(Q.get("c") || "") ? Q.get("c").toLowerCase() : "";
 const $ = s => document.querySelector(s);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const short = a => a.slice(0,6)+"..."+a.slice(-4);
@@ -384,7 +390,16 @@ async function refresh(){
         if(big(w[0]) === 1n) D.outcomes.set(String(d.id), { voided: big(w[1]) === 1n, winner: addrOf(w[2]) });
       }
     }
-    D.done = recent.filter(d => d.status === "settled" || d.status === "void").slice(0, 10);
+    // private duels belong to their Telegram group: kept out of this page's public lists
+    const flagIds = [...live, ...recent].map(d => d.id);
+    let priv = new Set();
+    if(flagIds.length){
+      const w = wordsOf(await call(CFG.DUEL, SEL.privateFlags + pad32(32) + pad32(flagIds.length) + flagIds.map(pad32).join("")));
+      flagIds.forEach((id, i) => { if(big(w[2 + i]) === 1n) priv.add(String(id)); });
+    }
+    D.live = live.filter(d => !priv.has(String(d.id)));
+    D.done = recent.filter(d => (d.status === "settled" || d.status === "void") && !priv.has(String(d.id))).slice(0, 10);
+    D.takeDuel = TAKE_ID !== null ? (await getDuels([TAKE_ID]))[0] : null;
     if(D.me){
       const [bal, allow, nMine] = await Promise.all([
         u(CFG.TOKEN, SEL.balanceOf + padAddr(D.me)), u(CFG.TOKEN, SEL.allowance + padAddr(D.me) + padAddr(CFG.DUEL)),
@@ -453,12 +468,12 @@ function render(){
 // a challenge opened from Telegram (?take=<id>): shown on top of the panel with its own Take button
 function renderTake(){
   const box = $("#tg-take"); if(TAKE_ID === null){ box.hidden = true; return; }
-  const all = D.open.concat(D.live, D.done, D.mine), d = all.find(x => x.id === TAKE_ID);
+  const d = D.takeDuel && D.takeDuel.id === TAKE_ID && D.takeDuel.status !== "none" ? D.takeDuel : null;
   box.hidden = false;
   if(!LIVE){ box.innerHTML = "<p>Duel #" + TAKE_ID + " from Telegram.</p>"; return; }
   if(d && d.status === "open"){
     const mine = D.me && d.creator === D.me;
-    box.innerHTML = `<p>Duel #${d.id} from Telegram: <b class="mono">${short(d.creator)}</b> bets ${fmtDraw(d.amount)} DRAW. The winner gets ${fmtDraw(winOf(d.amount))}.</p>` +
+    box.innerHTML = `<p>${PRIV_CODE ? "Private duel" : "Duel"} #${d.id} from Telegram: <b class="mono">${short(d.creator)}</b> bets ${fmtDraw(d.amount)} DRAW. The winner gets ${fmtDraw(winOf(d.amount))}.</p>` +
       (mine ? `<p>This is your own challenge. Someone else has to take it.</p>` : `<button class="btn accent" data-act="take" data-id="${d.id}" type="button">Take it for ${fmtDraw(d.amount)} DRAW</button>`);
   } else if(d){
     box.innerHTML = `<p>Duel #${d.id} is ${d.status === "live" ? "already facing off. Somebody took it first" : d.status === "cancelled" ? "cancelled" : "settled"}.</p>`;
@@ -481,7 +496,7 @@ function renderForm(){
   warn.textContent = w; warn.hidden = !w;
   const can = LIVE && D.ready && D.me && ok && bet <= D.bal && !D.busy;
   $("#post").disabled = !can;
-  $("#post").textContent = "Post challenge";
+  $("#post").textContent = PRIV_HASH ? "Post private challenge" : "Post challenge";
   let line = "Connect a wallet on Base to bet.";
   if(!LIVE && D.me) line = "Connected as " + short(D.me) + ".";
   else if(LIVE && !D.ready) line = "Challenges open once both launch caps are lifted.";
@@ -554,17 +569,20 @@ $("#post").addEventListener("click", () => act(async () => {
   const bet = parseDraw($("#amt").value);
   if(bet === null || bet < BigInt(CFG.MIN_BET) * ONE) throw {message:"The smallest bet is 10 DRAW."};
   await withAllowance(bet);
-  await send(CFG.DUEL, SEL.create + pad32(bet) + TAG_HEX, "Challenge for " + fmtDraw(bet) + " DRAW");
+  if(PRIV_HASH) await send(CFG.DUEL, SEL.createPrivate + pad32(bet) + PRIV_HASH + TAG_HEX, "Private challenge for " + fmtDraw(bet) + " DRAW");
+  else await send(CFG.DUEL, SEL.create + pad32(bet) + TAG_HEX, "Challenge for " + fmtDraw(bet) + " DRAW");
 }));
 document.addEventListener("click", e => {
   const b = e.target.closest("button[data-act]"); if(!b) return;
   const id = BigInt(b.dataset.id), kind = b.dataset.act;
   if(kind === "watch"){ const d = D.done.find(x => x.id === id); if(d) showDuel(d); $(".scene").scrollIntoView({behavior: reduced ? "auto" : "smooth", block:"center"}); return; }
   if(kind === "take") act(async () => {
-    const d = D.open.find(x => x.id === id); if(!d) throw {message:"That challenge is no longer open."};
+    const d = D.open.find(x => x.id === id) || (D.takeDuel && D.takeDuel.id === id && D.takeDuel.status === "open" ? D.takeDuel : null);
+    if(!d) throw {message:"That challenge is no longer open."};
     if(d.amount > D.bal) throw {message:"You need " + fmtDraw(d.amount) + " DRAW to take this challenge."};
     await withAllowance(d.amount);
-    await send(CFG.DUEL, SEL.accept + pad32(id) + TAG_HEX, "Taking the challenge");
+    if(PRIV_CODE && id === TAKE_ID) await send(CFG.DUEL, SEL.acceptWithCode + pad32(id) + PRIV_CODE + TAG_HEX, "Taking the private challenge");
+    else await send(CFG.DUEL, SEL.accept + pad32(id) + TAG_HEX, "Taking the challenge");
   });
   if(kind === "cancel") act(() => send(CFG.DUEL, SEL.cancel + pad32(id), "Cancel"));
   if(kind === "settle") act(() => send(CFG.DUEL, SEL.settle + pad32(id), "Settle"));
@@ -714,6 +732,7 @@ function idleShow(){
 
 /* ---- boot ---- */
 if(Q.get("amount") && parseDraw(Q.get("amount")) !== null) $("#amt").value = Q.get("amount");
+$("#priv-note").hidden = !PRIV_HASH;
 resize(); requestAnimationFrame(frame); renderForm(); renderTake();
 if(LIVE){
   const fc = $("#foot-ca"); fc.hidden = false;
