@@ -202,7 +202,7 @@ footer .mono{word-break:break-all}
         <div class="warn" id="warn" hidden></div>
         <button id="post" class="btn primary go" type="button" disabled>Post challenge</button>
         <div class="status" id="post-status" aria-live="polite"></div>
-        <div class="wallet-line" id="wallet-line">Connect a wallet on Base to bet.</div>
+        <div class="wallet-line" id="wallet-line">Connect a wallet on Ethereum to bet.</div>
       </div>
       <div>
         <div class="subhead"><h3>Open challenges</h3><small id="open-n"></small></div>
@@ -246,11 +246,11 @@ footer .mono{word-break:break-all}
       <div class="item"><div class="v">10 DRAW</div><div><h3>Smallest bet</h3><p>There is no largest. Both sides always bet the same amount.</p></div></div>
       <div class="item"><div class="v">1.8x</div><div><h3>The payout</h3><p>The pot is both bets. The winner receives 90% of it, which is 1.8 times the bet. The other 10% burns and DRAW's supply shrinks.</p></div></div>
       <div class="item"><div class="v">3 blocks</div><div><h3>Who wins</h3><p>The result comes from the hashes of the three blocks after the challenge is taken. Nobody knows them when it is taken. An odd seed means the challenger wins, an even seed means the taker wins.<code class="seed">seed = keccak256(hash(N+1), hash(N+2), hash(N+3), id, challenger, taker)</code></p></div></div>
-      <div class="item"><div class="v">8 seconds</div><div><h3>Settling</h3><p>Anyone can settle a duel once its three blocks exist. Our keeper does it within seconds. Settling only pays out a result that is already fixed.</p></div></div>
+      <div class="item"><div class="v">~1 minute</div><div><h3>Settling</h3><p>Anyone can settle a duel once its three blocks exist, about 48 seconds after it is taken. Our keeper does it right away. Settling only pays out a result that is already fixed.</p></div></div>
       <div class="item"><div class="v">Cancel</div><div><h3>Changing your mind</h3><p>You can cancel your challenge and get the whole bet back while nobody has taken it. Once it is taken, nobody can cancel it.</p></div></div>
-      <div class="item"><div class="v">4.5 hours</div><div><h3>Void</h3><p>If nobody settles a duel for about 4.5 hours, its block hashes expire. The duel is then void and both players get their bet back in full.</p></div></div>
+      <div class="item"><div class="v">27 hours</div><div><h3>Void</h3><p>If nobody settles a duel for about 27 hours, its block hashes expire. The duel is then void and both players get their bet back in full.</p></div></div>
       <div class="item"><div class="v">Your hand</div><div><h3>Betting moves DRAW out of your wallet</h3><p>Your hand on the street shrinks by the bet. At 5 DRAW or less it leaves the street, and ETH it won but did not claim passes to the other hands. Claim your ETH on the street page first. A win sends the payout back to your wallet and your hand grows again.</p></div></div>
-      <div class="item"><div class="v">Trust</div><div><h3>Who could tilt a result</h3><p>No player, keeper or team member can. Base's sequencer builds every block, so in theory it could shape the last of the three blocks. Mixing three blocks means no single earlier block decides anything.</p></div></div>
+      <div class="item"><div class="v">Trust</div><div><h3>Who could tilt a result</h3><p>No player, keeper or team member can. In theory the validator who builds the last of the three blocks could throw it away and retry until its hash suits one side, giving up the block's reward each time. Mixing three blocks means no single earlier block decides anything.</p></div></div>
       <div class="item"><div class="v">Approve</div><div><h3>Two wallet prompts</h3><p>The first time you bet, your wallet asks you to let the duel contract move that amount of DRAW, then to post or take the challenge. Never send DRAW straight to the contract. It only tracks bets made here and cannot return anything else.</p></div></div>
     </div>
   </div>
@@ -259,7 +259,7 @@ footer .mono{word-break:break-all}
 
 <footer>
   <div class="wrap" style="display:grid;gap:8px">
-    <div><b>Quickdraw</b>, a duel that lives inside the token. On Base.</div>
+    <div><b>Quickdraw</b>, a duel that lives inside the token. On Ethereum.</div>
     <div class="mono" id="foot-ca" hidden></div>
     <div>Not financial advice. A duel is a coin flip. Only bet what you are fine losing.</div>
   </div>
@@ -274,8 +274,8 @@ const CFG = {
   DUEL: "",                // QuickdrawDuel
   TOKEN: "",               // the DRAW token
   GAME: "",                // the QuickdrawHook (the game): used for the won-ETH warning
-  RPCS: ["https://base-rpc.publicnode.com","https://mainnet.base.org","https://base.drpc.org"],
-  CHAIN_ID: 8453,
+  RPCS: ["https://ethereum-rpc.publicnode.com","https://eth.drpc.org","https://1rpc.io/eth"],
+  CHAIN_ID: 1,
   MIN_BET: 10, BURN_BPS: 1000, SAFE_FLOOR: 5,
   TG_BOT: "QuickdrawShowdownBot", // the Telegram bot's username (no @), for the "Back to Telegram" link
 };
@@ -499,7 +499,7 @@ function renderForm(){
   const can = LIVE && D.ready && D.me && ok && bet <= D.bal && !D.busy;
   $("#post").disabled = !can;
   $("#post").textContent = PRIV_HASH ? "Post private challenge" : "Post challenge";
-  let line = "Connect a wallet on Base to bet.";
+  let line = "Connect a wallet on Ethereum to bet.";
   if(!LIVE && D.me) line = "Connected as " + short(D.me) + ".";
   else if(LIVE && !D.ready) line = "Challenges open once both launch caps are lifted.";
   else if(D.me) line = "In your wallet: " + fmtDraw(D.bal) + " DRAW.";
@@ -508,14 +508,8 @@ function renderForm(){
 }
 
 /* ---- the wallet ---- */
-async function ensureBase(){
-  try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x2105"}]}); }
-  catch(e){
-    if(e && (e.code===4902 || /unrecognized|not added|unknown chain/i.test(e.message||""))){
-      try{ await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:"0x2105",chainName:"Base",
-        nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18},rpcUrls:["https://mainnet.base.org"],blockExplorerUrls:["https://basescan.org"]}]}); }catch{}
-    }
-  }
+async function ensureEthereum(){
+  try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x1"}]}); }catch{}
 }
 async function connectWallet(){
   if(!window.ethereum){ say("No wallet found in this browser. Open this page in a wallet app or install one."); return; }
@@ -523,7 +517,7 @@ async function connectWallet(){
     const acc = await window.ethereum.request({method:"eth_requestAccounts"});
     D.me = acc[0].toLowerCase();
     for(const b of [$("#connect"),$("#connect-m")]) b.textContent = short(acc[0]);
-    await ensureBase();
+    await ensureEthereum();
     renderForm(); refresh();
   }catch(e){ say(e && e.code===4001 ? "Connection cancelled in your wallet." : "The wallet did not connect."); }
 }
@@ -536,15 +530,15 @@ function why(e){
   if(e && e.code === 4001) return "Cancelled in your wallet.";
   const s = JSON.stringify(e && (e.data || e.error || e)) + " " + (e && e.message || "");
   for(const k in ERR) if(s.includes(k.slice(2))) return ERR[k];
-  if(/insufficient funds/i.test(s)) return "Not enough ETH on Base for gas.";
+  if(/insufficient funds/i.test(s)) return "Not enough ETH for gas.";
   return "The wallet refused: " + esc((e && e.message || "unknown error").slice(0, 120));
 }
 async function send(to, data, label){
-  await ensureBase();
+  await ensureEthereum();
   const chain = await window.ethereum.request({method:"eth_chainId"});
-  if(parseInt(chain,16) !== CFG.CHAIN_ID) throw {message:"Switch your wallet to Base."};
+  if(parseInt(chain,16) !== CFG.CHAIN_ID) throw {message:"Switch your wallet to Ethereum."};
   const hash = await window.ethereum.request({method:"eth_sendTransaction",params:[{from:D.me,to,data}]});
-  const link = ' <a href="https://basescan.org/tx/'+hash+'" target="_blank" rel="noopener">See it on Basescan</a>.';
+  const link = ' <a href="https://etherscan.io/tx/'+hash+'" target="_blank" rel="noopener">See it on Etherscan</a>.';
   say(esc(label) + " sent." + link);
   for(let i=0;i<60;i++){
     await new Promise(r=>setTimeout(r,2000));
@@ -553,7 +547,7 @@ async function send(to, data, label){
       const back = TG_TAG && CFG.TG_BOT ? ' <a href="https://t.me/' + CFG.TG_BOT + '">Back to Telegram</a>.' : "";
       say(esc(label) + " done." + link + back); return; }
   }
-  throw {message:"No receipt yet. Check the transaction on Basescan."};
+  throw {message:"No receipt yet. Check the transaction on Etherscan."};
 }
 async function withAllowance(amount){
   if(D.allow >= amount) return;
@@ -738,7 +732,7 @@ $("#priv-note").hidden = !PRIV_HASH;
 resize(); requestAnimationFrame(frame); renderForm(); renderTake();
 if(LIVE){
   const fc = $("#foot-ca"); fc.hidden = false;
-  fc.innerHTML = 'Duel contract <a href="https://basescan.org/address/'+CFG.DUEL+'" target="_blank" rel="noopener">'+CFG.DUEL+'</a>';
+  fc.innerHTML = 'Duel contract <a href="https://etherscan.io/address/'+CFG.DUEL+'" target="_blank" rel="noopener">'+CFG.DUEL+'</a>';
   refresh(); setInterval(refresh, 4000);
 } else {
   idleShow(); setInterval(idleShow, 6000);

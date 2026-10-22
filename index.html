@@ -303,7 +303,7 @@ footer .mono{word-break:break-all}
   <div class="wrap">
     <div class="sec-head">
       <div><span class="kicker">How a draw works</span><h2 style="margin-top:8px">Nobody aims. Nobody presses fire.</h2></div>
-      <p class="muted">The whole game runs inside the token contract on Base. Trading moves it. The chain decides it.</p>
+      <p class="muted">The whole game runs inside the token contract on Ethereum. Trading moves it. The chain decides it.</p>
     </div>
     <div class="steps">
       <div class="step"><img class="still" src="/media/standoff.jpg" alt="Two gunslingers step into the middle of the street and face each other." loading="lazy" width="960" height="540"><div class="no">1</div><h3>Buy, and you are on the street</h3><p>Your balance is your stack. Bigger stacks stand taller. Hands sit in size tiers, and a draw only ever pairs neighbours on that ladder, so a whale cannot reach a small holder.</p></div>
@@ -367,7 +367,7 @@ footer .mono{word-break:break-all}
 
 <footer>
   <div class="wrap" style="display:grid;gap:8px">
-    <div><b>Quickdraw</b>, a duel that lives inside the token. On Base.</div>
+    <div><b>Quickdraw</b>, a duel that lives inside the token. On Ethereum.</div>
     <div class="mono" id="foot-ca" hidden></div>
     <div>Not financial advice. Losing a draw costs you at most the top 25% of your peak stack. The other 75% can never be taken.</div>
   </div>
@@ -383,8 +383,8 @@ const CFG = {
   CONTRACT: "",            // the hook (the game): set after launch
   TOKEN: "",               // the DRAW token (balances, supply)
   TRADE_URL: "",           // where to buy: the Programmable page of the coin once listed
-  RPCS: ["https://base-rpc.publicnode.com","https://mainnet.base.org","https://base.drpc.org"],
-  CHAIN_ID: 8453,
+  RPCS: ["https://ethereum-rpc.publicnode.com","https://eth.drpc.org","https://1rpc.io/eth"],
+  CHAIN_ID: 1,
   NAME: "Quickdraw", SYMBOL: "DRAW",
   SAFE_FLOOR: 5, FLOOR_BPS: 7500, BURN_BPS: 9500, BOUNTY_DRAW_BPS: 2000,
   SHIELD_S: 3600, FATIGUE_S: 4800, STREAK_MAX: 3, KILL_COOLDOWN_S: 360,
@@ -840,15 +840,9 @@ async function liveClock(){
 }
 
 /* ---- wallet ---- */
-/* the wallet onto Base (8453): switch, or add it first when the wallet does not know it yet */
-async function ensureBase(){
-  try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x2105"}]}); }
-  catch(e){
-    if(e && (e.code===4902 || /unrecognized|not added|unknown chain/i.test(e.message||""))){
-      try{ await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:"0x2105",chainName:"Base",
-        nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18},rpcUrls:["https://mainnet.base.org"],blockExplorerUrls:["https://basescan.org"]}]}); }catch{}
-    }
-  }
+/* the wallet onto Ethereum mainnet (every wallet knows it) */
+async function ensureEthereum(){
+  try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x1"}]}); }catch{}
 }
 async function connectWallet(){
   if(!window.ethereum){ story("No wallet found in this browser. Paste your address in the box under the standings instead."); return; }
@@ -856,7 +850,7 @@ async function connectWallet(){
     const acc=await window.ethereum.request({method:"eth_requestAccounts"});
     S.me=acc[0].toLowerCase();
     for(const b of [$("#connect"),$("#connect-m")]) b.textContent=short(acc[0]);
-    await ensureBase();
+    await ensureEthereum();
     renderTable();
     const mine=[...S.hands.values()].find(c=>c.owner.toLowerCase()===S.me);
     story(mine ? "Your hand is marked on the street." : "Connected. Buy DRAW and your hand steps onto the street.");
@@ -926,9 +920,9 @@ async function sendClaim(data, label){
   if(!window.ethereum || !S.me || !LIVE) return;
   Y.busy = true; refreshYours();
   try{
-    await ensureBase();
+    await ensureEthereum();
     const hash = await window.ethereum.request({method:"eth_sendTransaction",params:[{from:S.me,to:CFG.CONTRACT,data}]});
-    const link = '<a href="https://basescan.org/tx/'+hash+'" target="_blank" rel="noopener">See it on Basescan</a>.';
+    const link = '<a href="https://etherscan.io/tx/'+hash+'" target="_blank" rel="noopener">See it on Etherscan</a>.';
     $("#y-tx").innerHTML = label+" sent. "+link;
     for(let i=0;i<40;i++){
       await new Promise(r=>setTimeout(r,3000));
@@ -955,7 +949,7 @@ setInterval(refreshYours, 6000);
 /* ---- boot ---- */
 resize();
 if(LIVE){
-  const uni=CFG.TRADE_URL||("https://app.uniswap.org/swap?chain=base&outputCurrency="+(CFG.TOKEN||CFG.CONTRACT));
+  const uni=CFG.TRADE_URL||("https://app.uniswap.org/swap?chain=mainnet&outputCurrency="+(CFG.TOKEN||CFG.CONTRACT));
   for(const id of ["buy-top","buy-top-m","buy-hero"]){ const a=document.getElementById(id); a.href=uni; a.removeAttribute("aria-disabled"); a.target="_blank"; a.rel="noopener"; }
   const fc=$("#foot-ca"); fc.hidden=false; fc.textContent="Token "+(CFG.TOKEN||CFG.CONTRACT)+(CFG.TOKEN?"  Game "+CFG.CONTRACT:"");
   $("#board-note").textContent="Read straight from the contract. Standings refresh every few seconds.";
