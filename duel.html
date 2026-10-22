@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Quickdraw showdown</title>
-<meta name="description" content="Bet DRAW one on one. Post a challenge, anyone can take it with the same amount, and three blocks later the chain names the winner. The winner takes 1.8 times the bet and 10% of the pot burns.">
+<meta name="description" content="Bet DRAW or ETH one on one. Post a challenge, anyone can take it with the same amount, and three blocks later the chain names the winner. The winner takes 1.8 times the bet.">
 <meta property="og:title" content="Quickdraw showdown">
-<meta property="og:description" content="Bet DRAW one on one. The winner takes 1.8 times the bet and 10% of the pot burns.">
+<meta property="og:description" content="Bet DRAW or ETH one on one. The winner takes 1.8 times the bet.">
 <meta property="og:image" content="https://quickdrawprotocol.xyz/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://quickdrawprotocol.xyz/og.png">
@@ -98,6 +98,7 @@ hr.rule{border:0;border-top:2px solid var(--ink);margin:0}
 .status{font-size:.88rem;color:var(--ink-2);margin-top:10px;min-height:1.4em}
 .status a{color:var(--rust)}
 .wallet-line{font-size:.9rem;color:var(--ink-2);margin-top:10px}
+.cur-switch{display:flex;gap:8px;margin-bottom:20px}
 .tg-take{border:2px solid var(--rust);background:var(--paper);padding:12px 14px;margin-bottom:16px}
 .tg-take p{font-size:.95rem;margin-bottom:10px}
 .tg-take .btn{width:100%}
@@ -174,8 +175,8 @@ footer .mono{word-break:break-all}
   <div class="hero">
     <div>
       <span class="kicker">One on one</span>
-      <h1 style="margin-top:14px">Put DRAW on the table. One shot settles it.</h1>
-      <p class="lede">Post a bet and wait. Anyone can take it with the same amount. Three blocks later the chain names the winner, who walks away with 1.8 times the bet. The other 10% of the pot burns.</p>
+      <h1 style="margin-top:14px">Put DRAW or ETH on the table. One shot settles it.</h1>
+      <p class="lede">Post a bet and wait. Anyone can take it with the same amount. Three blocks later the chain names the winner, who walks away with 1.8 times the bet. The other 10% of the pot burns in a DRAW duel and goes to the treasury in an ETH duel.</p>
     </div>
     <div>
       <div class="scene"><canvas id="scene" aria-label="Two gunslingers face off on the street"></canvas></div>
@@ -191,13 +192,17 @@ footer .mono{word-break:break-all}
       <div><span class="kicker">The table</span><h2 style="margin-top:8px">Post a challenge or take one</h2></div>
       <p class="muted">Both sides bet the same. A challenge stays open until someone takes it or you cancel it. Once taken, nobody can back out.</p>
     </div>
+    <div class="cur-switch" role="group" aria-label="What you bet">
+      <button class="btn primary" data-cur="draw" type="button" aria-pressed="true">DRAW duels</button>
+      <button class="btn" data-cur="eth" type="button" aria-pressed="false">ETH duels</button>
+    </div>
     <div class="desk-grid">
       <div class="post">
         <div class="tg-take" id="tg-take" hidden></div>
         <h3>Post a challenge</h3>
-        <label for="amt">Your bet in DRAW</label>
+        <label for="amt" id="amt-label">Your bet in DRAW</label>
         <div class="amt"><input id="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="100" aria-describedby="calc"><button id="max" class="btn" type="button">Max</button></div>
-        <div class="calc" id="calc"><span>If you win</span><span id="c-win">180 DRAW</span><span>Burned either way</span><span id="c-burn">20 DRAW</span></div>
+        <div class="calc" id="calc"><span>If you win</span><span id="c-win">180 DRAW</span><span id="c-fee-l">Burned either way</span><span id="c-burn">20 DRAW</span></div>
         <p class="wallet-line" id="priv-note" hidden>Private to your Telegram group. Only members the bot gives the link to can take it, and it stays off the public lists.</p>
         <div class="warn" id="warn" hidden></div>
         <button id="post" class="btn primary go" type="button" disabled>Post challenge</button>
@@ -221,7 +226,7 @@ footer .mono{word-break:break-all}
 
         <div class="subhead"><h3>Last results</h3><small></small></div>
         <div class="tbl-wrap"><table class="cards">
-          <thead><tr><th>Winner</th><th>Loser</th><th class="n">Paid</th><th class="n">Burned</th><th></th></tr></thead>
+          <thead><tr><th>Winner</th><th>Loser</th><th class="n">Paid</th><th class="n" id="th-fee">Burned</th><th></th></tr></thead>
           <tbody id="done-rows"></tbody>
         </table></div>
         <div class="empty" id="done-empty">No duel has been settled yet.</div>
@@ -241,17 +246,17 @@ footer .mono{word-break:break-all}
 <hr class="rule">
 <section id="rules">
   <div class="wrap grid">
-    <div class="lhs"><span class="kicker">The rules</span><h2 style="margin-top:8px">Fixed in the contract</h2><p class="muted">The duel contract has no owner and no admin. Nobody can change these numbers, pause it or take a fee.</p></div>
+    <div class="lhs"><span class="kicker">The rules</span><h2 style="margin-top:8px">Fixed in the contract</h2><p class="muted" id="rules-lede">The duel contract has no owner and no admin. Nobody can change these numbers, pause it or take a fee.</p></div>
     <div class="items">
-      <div class="item"><div class="v">10 DRAW</div><div><h3>Smallest bet</h3><p>There is no largest. Both sides always bet the same amount.</p></div></div>
-      <div class="item"><div class="v">1.8x</div><div><h3>The payout</h3><p>The pot is both bets. The winner receives 90% of it, which is 1.8 times the bet. The other 10% burns and DRAW's supply shrinks.</p></div></div>
+      <div class="item"><div class="v" id="r-min">10 DRAW</div><div><h3>Smallest bet</h3><p>There is no largest. Both sides always bet the same amount.</p></div></div>
+      <div class="item"><div class="v">1.8x</div><div><h3>The payout</h3><p id="r-payout">The pot is both bets. The winner receives 90% of it, which is 1.8 times the bet. The other 10% burns and DRAW's supply shrinks.</p></div></div>
       <div class="item"><div class="v">3 blocks</div><div><h3>Who wins</h3><p>The result comes from the hashes of the three blocks after the challenge is taken. Nobody knows them when it is taken. An odd seed means the challenger wins, an even seed means the taker wins.<code class="seed">seed = keccak256(hash(N+1), hash(N+2), hash(N+3), id, challenger, taker)</code></p></div></div>
       <div class="item"><div class="v">~1 minute</div><div><h3>Settling</h3><p>Anyone can settle a duel once its three blocks exist, about 48 seconds after it is taken. Our keeper does it right away. Settling only pays out a result that is already fixed.</p></div></div>
       <div class="item"><div class="v">Cancel</div><div><h3>Changing your mind</h3><p>You can cancel your challenge and get the whole bet back while nobody has taken it. Once it is taken, nobody can cancel it.</p></div></div>
       <div class="item"><div class="v">27 hours</div><div><h3>Void</h3><p>If nobody settles a duel for about 27 hours, its block hashes expire. The duel is then void and both players get their bet back in full.</p></div></div>
-      <div class="item"><div class="v">Your hand</div><div><h3>Betting moves DRAW out of your wallet</h3><p>Your hand on the street shrinks by the bet. At 5 DRAW or less it leaves the street, and ETH it won but did not claim passes to the other hands. Claim your ETH on the street page first. A win sends the payout back to your wallet and your hand grows again.</p></div></div>
+      <div class="item" id="r-hand"><div class="v">Your hand</div><div><h3>Betting moves DRAW out of your wallet</h3><p>Your hand on the street shrinks by the bet. At 5 DRAW or less it leaves the street, and ETH it won but did not claim passes to the other hands. Claim your ETH on the street page first. A win sends the payout back to your wallet and your hand grows again.</p></div></div>
       <div class="item"><div class="v">Trust</div><div><h3>Who could tilt a result</h3><p>No player, keeper or team member can. In theory the validator who builds the last of the three blocks could throw it away and retry until its hash suits one side, giving up the block's reward each time. Mixing three blocks means no single earlier block decides anything.</p></div></div>
-      <div class="item"><div class="v">Approve</div><div><h3>Two wallet prompts</h3><p>The first time you bet, your wallet asks you to let the duel contract move that amount of DRAW, then to post or take the challenge. Never send DRAW straight to the contract. It only tracks bets made here and cannot return anything else.</p></div></div>
+      <div class="item" id="r-approve"><div class="v">Approve</div><div><h3>Two wallet prompts</h3><p>The first time you bet, your wallet asks you to let the duel contract move that amount of DRAW, then to post or take the challenge. Never send DRAW straight to the contract. It only tracks bets made here and cannot return anything else.</p></div></div>
     </div>
   </div>
 </section>
@@ -274,9 +279,11 @@ const CFG = {
   DUEL: "",                // QuickdrawDuel
   TOKEN: "",               // the DRAW token
   GAME: "",                // the QuickdrawHook (the game): used for the won-ETH warning
+  ETH_DUEL: "",            // QuickdrawEthDuel: ETH bets, 10% of a decided pot to the treasury
   RPCS: ["https://ethereum-rpc.publicnode.com","https://eth.drpc.org","https://1rpc.io/eth"],
   CHAIN_ID: 1,
   MIN_BET: 10, BURN_BPS: 1000, SAFE_FLOOR: 5,
+  ETH_GAS_RESERVE: "0.003",  // ETH kept back by Max in ETH mode, for gas
   TG_BOT: "QuickdrawShowdownBot", // the Telegram bot's username (no @), for the "Back to Telegram" link
 };
 const SEL = {
@@ -286,6 +293,7 @@ const SEL = {
   ready:"0x6defbf80", outcome:"0x5a11492a", duelCountOf:"0x0ccdac1b",
   createPrivate:"0x389e876b", acceptWithCode:"0x893c7639", privateFlags:"0xc401dacb",
   approve:"0x095ea7b3", allowance:"0xdd62ed3e", balanceOf:"0x70a08231", handEth:"0xede83090",
+  createEth:"0xefc81a8c", createPrivateEth:"0x655d7b19", totalFees:"0x13114a9d", // QuickdrawEthDuel
 };
 const ERR = {
   "0xd312a688":"The smallest bet is 10 DRAW.", "0xa117e0aa":"That bet is larger than all DRAW in existence.",
@@ -294,14 +302,29 @@ const ERR = {
   "0x93687c0b":"Only the challenger can cancel.", "0xfcc8c860":"You cannot take your own challenge.",
   "0x085de625":"The three seed blocks do not all exist yet. Try again in a few seconds.",
   "0x3407affe":"That duel is private to a Telegram group. Take it from the group's link.", "0x9e3ba915":"This private duel's link is not valid. Ask the bot for a new one.",
+  "0x49986e73":"Send exactly the duel's bet.",
 };
-const LIVE = !!(CFG.DUEL && CFG.TOKEN);
 const ONE = 10n**18n;
-// Links from the Telegram bot: ?amount=500 prefills a challenge, ?take=12 shows that duel on top, ?t=<tag> is the
+/* two tables on one page: DRAW duels (QuickdrawDuel) and ETH duels (QuickdrawEthDuel), the same rules and the same
+   call shapes; ETH bets ride as the transaction value and their 10% goes to the treasury instead of burning */
+const MODES = {
+  draw: { unit:"DRAW", min:10n*ONE, minText:"10 DRAW", feeCalc:"Burned either way", feeCol:"Burned", feeWord:"burns",
+          payout:"The pot is both bets. The winner receives 90% of it, which is 1.8 times the bet. The other 10% burns and DRAW's supply shrinks.",
+          lede:"The duel contract has no owner and no admin. Nobody can change these numbers, pause it or take a fee." },
+  eth:  { unit:"ETH", min:ONE/100n, minText:"0.01 ETH", feeCalc:"To the treasury", feeCol:"Treasury", feeWord:"goes to the treasury",
+          payout:"The pot is both bets. The winner receives 90% of it, which is 1.8 times the bet. The other 10% goes to the Quickdraw treasury.",
+          lede:"The duel contract has no owner and no admin. Nobody can change these numbers or pause it. Its only fee is the 10% of a decided pot." },
+};
+let CUR = "draw";
+const M = () => MODES[CUR];
+const duelAddr = () => CUR === "eth" ? CFG.ETH_DUEL : CFG.DUEL;
+const live = () => CUR === "eth" ? !!CFG.ETH_DUEL : !!(CFG.DUEL && CFG.TOKEN);
+// Links from the Telegram bot: ?cur=eth opens the ETH table, ?amount=500 prefills a challenge, ?take=12 shows that duel on top, ?t=<tag> is the
 // player's personal tag. The tag rides at the END of the create / accept call data ("QD1:" + tag, ASCII): the duel
 // contract reads only the bytes it needs and ignores the rest, and the bot reads the tag back from the transaction to
 // know which Telegram player and which group the duel belongs to. Nothing else is sent anywhere.
 const Q = new URLSearchParams(location.search);
+if(Q.get("cur") === "eth") CUR = "eth";
 const TG_TAG = /^[A-Za-z0-9_-]{8,64}$/.test(Q.get("t") || "") ? Q.get("t") : "";
 const TAG_HEX = TG_TAG ? "5144313a" + [...TG_TAG].map(c => c.charCodeAt(0).toString(16).padStart(2, "0")).join("") : "";
 const TAKE_ID = /^\d{1,12}$/.test(Q.get("take") || "") ? BigInt(Q.get("take")) : null;
@@ -330,6 +353,8 @@ function parseDraw(s){
   const [a, b=""] = s.split(".");
   return BigInt(a||"0") * ONE + BigInt((b+"0".repeat(18)).slice(0,18));
 }
+// the bet's own unit: DRAW to two decimals (none from 1,000), ETH to four
+const fmtAmt = (wei, dp) => fmtDraw(wei, dp ?? (CUR === "eth" ? 4 : 2));
 const winOf = bet => bet * 2n - bet * 2n * BigInt(CFG.BURN_BPS) / 10000n;
 const burnOf = bet => bet * 2n * BigInt(CFG.BURN_BPS) / 10000n;
 function ago(ts){
@@ -362,7 +387,7 @@ const STATUS = ["none","open","cancelled","live","settled","void"];
 async function getDuels(ids){
   if(!ids.length) return [];
   const data = SEL.getDuels + pad32(32) + pad32(ids.length) + ids.map(pad32).join("");
-  const w = wordsOf(await call(CFG.DUEL, data)), len = Number(big(w[1])), out = [];
+  const w = wordsOf(await call(duelAddr(), data)), len = Number(big(w[1])), out = [];
   for(let k=0;k<len;k++){ const b = 2 + k*7;
     out.push({ id:ids[k], creator:addrOf(w[b]), createdAt:Number(big(w[b+1])), status:STATUS[Number(big(w[b+2]))]||"none",
       accepter:addrOf(w[b+3]), targetBlock:Number(big(w[b+4])), winner:addrOf(w[b+5]), amount:big(w[b+6]) }); }
@@ -374,12 +399,14 @@ const D = { me:null, bal:0n, allow:0n, handEth:0n, ready:false, block:0, open:[]
             outcomes:new Map(), stats:{settled:0n, burned:0n, volume:0n}, busy:false, seen:new Set() };
 
 async function refresh(){
-  if(!LIVE) return;
+  if(!live()) return;
+  const cur = CUR, DUEL = duelAddr();
   try{
     const [ready, block, openHex, liveHex, count, settled, burned, volume] = await Promise.all([
-      u(CFG.DUEL, SEL.ready), rpc("eth_blockNumber",[]),
-      call(CFG.DUEL, SEL.openDuels + pad32(0) + pad32(200)), call(CFG.DUEL, SEL.liveDuels + pad32(0) + pad32(200)),
-      u(CFG.DUEL, SEL.duelCount), u(CFG.DUEL, SEL.totalSettled), u(CFG.DUEL, SEL.totalBurned), u(CFG.DUEL, SEL.totalVolume)]);
+      u(DUEL, SEL.ready), rpc("eth_blockNumber",[]),
+      call(DUEL, SEL.openDuels + pad32(0) + pad32(200)), call(DUEL, SEL.liveDuels + pad32(0) + pad32(200)),
+      u(DUEL, SEL.duelCount), u(DUEL, SEL.totalSettled), u(DUEL, cur === "eth" ? SEL.totalFees : SEL.totalBurned), u(DUEL, SEL.totalVolume)]);
+    if(cur !== CUR) return; // the table was switched while this read was out
     D.ready = ready === 1n; D.block = Number(BigInt(block));
     D.stats = { settled, burned, volume };
     const recentIds = []; for(let i=count; i>0n && recentIds.length<24; i--) recentIds.push(i);
@@ -388,7 +415,7 @@ async function refresh(){
     D.live = live;
     for(const d of D.live){
       if(D.block > d.targetBlock + 2 && !D.outcomes.has(String(d.id))){
-        const w = wordsOf(await call(CFG.DUEL, SEL.outcome + pad32(d.id)));
+        const w = wordsOf(await call(DUEL, SEL.outcome + pad32(d.id)));
         if(big(w[0]) === 1n) D.outcomes.set(String(d.id), { voided: big(w[1]) === 1n, winner: addrOf(w[2]) });
       }
     }
@@ -396,7 +423,7 @@ async function refresh(){
     const flagIds = [...live, ...recent].map(d => d.id);
     let priv = new Set();
     if(flagIds.length){
-      const w = wordsOf(await call(CFG.DUEL, SEL.privateFlags + pad32(32) + pad32(flagIds.length) + flagIds.map(pad32).join("")));
+      const w = wordsOf(await call(DUEL, SEL.privateFlags + pad32(32) + pad32(flagIds.length) + flagIds.map(pad32).join("")));
       flagIds.forEach((id, i) => { if(big(w[2 + i]) === 1n) priv.add(String(id)); });
     }
     D.live = live.filter(d => !priv.has(String(d.id)));
@@ -404,14 +431,17 @@ async function refresh(){
     D.takeDuel = TAKE_ID !== null ? (await getDuels([TAKE_ID]))[0] : null;
     if(D.me){
       const [bal, allow, nMine] = await Promise.all([
-        u(CFG.TOKEN, SEL.balanceOf + padAddr(D.me)), u(CFG.TOKEN, SEL.allowance + padAddr(D.me) + padAddr(CFG.DUEL)),
-        u(CFG.DUEL, SEL.duelCountOf + padAddr(D.me))]);
+        cur === "eth" ? rpc("eth_getBalance",[D.me,"latest"]).then(BigInt) : u(CFG.TOKEN, SEL.balanceOf + padAddr(D.me)),
+        cur === "eth" ? Promise.resolve(0n) : u(CFG.TOKEN, SEL.allowance + padAddr(D.me) + padAddr(DUEL)),
+        u(DUEL, SEL.duelCountOf + padAddr(D.me))]);
+      if(cur !== CUR) return;
       D.bal = bal; D.allow = allow;
       const start = nMine > 20n ? nMine - 20n : 0n;
-      const mineIds = idsOf(await call(CFG.DUEL, SEL.duelsOf + padAddr(D.me) + pad32(start) + pad32(20)));
+      const mineIds = idsOf(await call(DUEL, SEL.duelsOf + padAddr(D.me) + pad32(start) + pad32(20)));
       D.mine = (await getDuels(mineIds)).reverse();
-      if(CFG.GAME){ try{ D.handEth = await u(CFG.GAME, SEL.handEth + padAddr(D.me)); }catch{ D.handEth = 0n; } }
+      if(cur === "draw" && CFG.GAME){ try{ D.handEth = await u(CFG.GAME, SEL.handEth + padAddr(D.me)); }catch{ D.handEth = 0n; } }
     }
+    if(cur !== CUR) return;
     render();
     watchForShow();
   }catch(e){ /* a public RPC hiccup: the next poll tries again */ }
@@ -425,8 +455,8 @@ function render(){
     const mine = me && d.creator === me;
     const act = mine ? `<button class="btn" data-act="cancel" data-id="${d.id}" type="button">Cancel</button>`
                      : `<button class="btn primary" data-act="take" data-id="${d.id}" type="button">Take it</button>`;
-    return `<tr class="${mine?"you":""}"><td class="mono">${short(d.creator)}${mine?" (you)":""}</td><td class="n" data-l="Bet">${fmtDraw(d.amount)}</td>`+
-           `<td class="n" data-l="Winner gets">${fmtDraw(winOf(d.amount))}</td><td class="n" data-l="Posted">${ago(d.createdAt)}</td><td class="a">${act}</td></tr>`;
+    return `<tr class="${mine?"you":""}"><td class="mono">${short(d.creator)}${mine?" (you)":""}</td><td class="n" data-l="Bet">${fmtAmt(d.amount)}</td>`+
+           `<td class="n" data-l="Winner gets">${fmtAmt(winOf(d.amount))}</td><td class="n" data-l="Posted">${ago(d.createdAt)}</td><td class="a">${act}</td></tr>`;
   }).join("");
   $("#open-empty").hidden = D.open.length > 0;
   $("#open-n").textContent = D.open.length ? D.open.length + " open" : "";
@@ -439,17 +469,17 @@ function render(){
       state = o ? (o.voided ? "Void, refunding" : short(o.winner) + " wins, settling") : "Settling";
       act = `<button class="btn" data-act="settle" data-id="${d.id}" type="button">Settle</button>`;
     }
-    return `<tr><td class="mono" data-l="Challenger">${short(d.creator)}</td><td class="mono" data-l="Taker">${short(d.accepter)}</td><td class="n" data-l="Bet">${fmtDraw(d.amount)}</td>`+
+    return `<tr><td class="mono" data-l="Challenger">${short(d.creator)}</td><td class="mono" data-l="Taker">${short(d.accepter)}</td><td class="n" data-l="Bet">${fmtAmt(d.amount)}</td>`+
            `<td class="state">${state}</td><td class="a">${act}</td></tr>`;
   }).join("");
   $("#live-empty").hidden = D.live.length > 0;
   $("#live-n").textContent = D.live.length ? D.live.length + " live" : "";
   // results
   $("#done-rows").innerHTML = D.done.map(d => {
-    if(d.status === "void") return `<tr><td class="mono" colspan="2" data-l="Void">${short(d.creator)} and ${short(d.accepter)}</td><td class="n" data-l="Paid">refunded</td><td class="n" data-l="Burned">0</td><td class="a"></td></tr>`;
+    if(d.status === "void") return `<tr><td class="mono" colspan="2" data-l="Void">${short(d.creator)} and ${short(d.accepter)}</td><td class="n" data-l="Paid">refunded</td><td class="n" data-l="${M().feeCol}">0</td><td class="a"></td></tr>`;
     const loser = d.winner === d.creator ? d.accepter : d.creator;
-    return `<tr><td class="mono" data-l="Winner">${short(d.winner)}</td><td class="mono" data-l="Loser">${short(loser)}</td><td class="n" data-l="Paid">${fmtDraw(winOf(d.amount))}</td>`+
-           `<td class="n" data-l="Burned">${fmtDraw(burnOf(d.amount))}</td><td class="a"><button class="btn" data-act="watch" data-id="${d.id}" type="button">Watch</button></td></tr>`;
+    return `<tr><td class="mono" data-l="Winner">${short(d.winner)}</td><td class="mono" data-l="Loser">${short(loser)}</td><td class="n" data-l="Paid">${fmtAmt(winOf(d.amount))}</td>`+
+           `<td class="n" data-l="${M().feeCol}">${fmtAmt(burnOf(d.amount))}</td><td class="a"><button class="btn" data-act="watch" data-id="${d.id}" type="button">Watch</button></td></tr>`;
   }).join("");
   $("#done-empty").hidden = D.done.length > 0;
   // yours
@@ -459,11 +489,12 @@ function render(){
     const other = d.creator === me ? d.accepter : d.creator;
     let res = d.status === "open" ? "Open" : d.status === "cancelled" ? "Cancelled" : d.status === "void" ? "Void, refunded" : "Facing off";
     let cls = "state";
-    if(d.status === "settled"){ const won = d.winner === me; res = won ? "Won " + fmtDraw(winOf(d.amount)) + " DRAW" : "Lost"; if(won) cls += " won"; }
-    return `<tr><td class="mono" data-l="Opponent">${other && !/^0x0+$/.test(other) ? short(other) : "none yet"}</td><td class="n" data-l="Bet">${fmtDraw(d.amount)}</td><td class="${cls}">${res}</td></tr>`;
+    if(d.status === "settled"){ const won = d.winner === me; res = won ? "Won " + fmtAmt(winOf(d.amount)) + " " + M().unit : "Lost"; if(won) cls += " won"; }
+    return `<tr><td class="mono" data-l="Opponent">${other && !/^0x0+$/.test(other) ? short(other) : "none yet"}</td><td class="n" data-l="Bet">${fmtAmt(d.amount)}</td><td class="${cls}">${res}</td></tr>`;
   }).join("");
   // tally under the scene
-  if(D.stats.settled > 0n) $("#tally").textContent = `${D.stats.settled} ${D.stats.settled === 1n ? "duel" : "duels"} settled, ${fmtDraw(D.stats.burned,0)} DRAW burned`;
+  $("#tally").textContent = D.stats.settled > 0n ? `${D.stats.settled} ${D.stats.settled === 1n ? "duel" : "duels"} settled, ` +
+    (CUR === "eth" ? `${fmtAmt(D.stats.volume)} ETH in pots` : `${fmtDraw(D.stats.burned,0)} DRAW burned`) : "";
   renderForm(); renderTake();
 }
 
@@ -472,37 +503,39 @@ function renderTake(){
   const box = $("#tg-take"); if(TAKE_ID === null){ box.hidden = true; return; }
   const d = D.takeDuel && D.takeDuel.id === TAKE_ID && D.takeDuel.status !== "none" ? D.takeDuel : null;
   box.hidden = false;
-  if(!LIVE){ box.innerHTML = "<p>Duel #" + TAKE_ID + " from Telegram.</p>"; return; }
+  if(!live()){ box.innerHTML = "<p>Duel #" + TAKE_ID + " from Telegram.</p>"; return; }
   if(d && d.status === "open"){
     const mine = D.me && d.creator === D.me;
-    box.innerHTML = `<p>${PRIV_CODE ? "Private duel" : "Duel"} #${d.id} from Telegram: <b class="mono">${short(d.creator)}</b> bets ${fmtDraw(d.amount)} DRAW. The winner gets ${fmtDraw(winOf(d.amount))}.</p>` +
-      (mine ? `<p>This is your own challenge. Someone else has to take it.</p>` : `<button class="btn accent" data-act="take" data-id="${d.id}" type="button">Take it for ${fmtDraw(d.amount)} DRAW</button>`);
+    box.innerHTML = `<p>${PRIV_CODE ? "Private duel" : "Duel"} #${d.id} from Telegram: <b class="mono">${short(d.creator)}</b> bets ${fmtAmt(d.amount)} ${M().unit}. The winner gets ${fmtAmt(winOf(d.amount))}.</p>` +
+      (mine ? `<p>This is your own challenge. Someone else has to take it.</p>` : `<button class="btn accent" data-act="take" data-id="${d.id}" type="button">Take it for ${fmtAmt(d.amount)} ${M().unit}</button>`);
   } else if(d){
     box.innerHTML = `<p>Duel #${d.id} is ${d.status === "live" ? "already facing off. Somebody took it first" : d.status === "cancelled" ? "cancelled" : "settled"}.</p>`;
   } else box.innerHTML = `<p>Looking up duel #${TAKE_ID}.</p>`;
 }
 
 function renderForm(){
+  const m = M();
   const bet = parseDraw($("#amt").value);
-  const ok = bet !== null && bet >= BigInt(CFG.MIN_BET) * ONE;
-  $("#c-win").textContent = ok ? fmtDraw(winOf(bet)) + " DRAW" : "";
-  $("#c-burn").textContent = ok ? fmtDraw(burnOf(bet)) + " DRAW" : "";
+  const ok = bet !== null && bet >= m.min;
+  $("#c-win").textContent = ok ? fmtAmt(winOf(bet)) + " " + m.unit : "";
+  $("#c-burn").textContent = ok ? fmtAmt(burnOf(bet)) + " " + m.unit : "";
   const warn = $("#warn");
   let w = "";
-  if(bet !== null && bet > 0n && bet < BigInt(CFG.MIN_BET) * ONE) w = "The smallest bet is 10 DRAW.";
-  else if(D.me && ok && bet > D.bal) w = "You hold " + fmtDraw(D.bal) + " DRAW, less than this bet.";
-  else if(D.me && ok && D.bal - bet <= BigInt(CFG.SAFE_FLOOR) * ONE && D.bal > BigInt(CFG.SAFE_FLOOR) * ONE){
+  if(bet !== null && bet > 0n && bet < m.min) w = "The smallest bet is " + m.minText + ".";
+  else if(D.me && ok && bet > D.bal) w = "You hold " + fmtAmt(D.bal) + " " + m.unit + ", less than this bet.";
+  else if(CUR === "eth" && D.me && ok && D.bal - bet < parseDraw(CFG.ETH_GAS_RESERVE)) w = "Keep a little ETH for gas: this bet leaves you almost none.";
+  else if(CUR === "draw" && D.me && ok && D.bal - bet <= BigInt(CFG.SAFE_FLOOR) * ONE && D.bal > BigInt(CFG.SAFE_FLOOR) * ONE){
     w = "This bet leaves you 5 DRAW or less, so your hand leaves the street.";
     if(D.handEth > 0n) w += " Its unclaimed " + (Number(D.handEth)/1e18).toFixed(5) + " ETH would pass to the other hands. Claim it on the street page first.";
   }
   warn.textContent = w; warn.hidden = !w;
-  const can = LIVE && D.ready && D.me && ok && bet <= D.bal && !D.busy;
+  const can = live() && D.ready && D.me && ok && bet <= D.bal && !D.busy;
   $("#post").disabled = !can;
   $("#post").textContent = PRIV_HASH ? "Post private challenge" : "Post challenge";
   let line = "Connect a wallet on Ethereum to bet.";
-  if(!LIVE && D.me) line = "Connected as " + short(D.me) + ".";
-  else if(LIVE && !D.ready) line = "Challenges open once both launch caps are lifted.";
-  else if(D.me) line = "In your wallet: " + fmtDraw(D.bal) + " DRAW.";
+  if(!live() && D.me) line = "Connected as " + short(D.me) + ".";
+  else if(live() && !D.ready) line = "Challenges open once both launch caps are lifted.";
+  else if(D.me) line = "In your wallet: " + fmtAmt(D.bal) + " " + m.unit + ".";
   $("#wallet-line").textContent = line;
   $("#max").disabled = !(D.me && D.bal > 0n);
 }
@@ -529,15 +562,18 @@ function say(html){ $("#post-status").innerHTML = html; }
 function why(e){
   if(e && e.code === 4001) return "Cancelled in your wallet.";
   const s = JSON.stringify(e && (e.data || e.error || e)) + " " + (e && e.message || "");
+  if(s.includes("d312a688")) return "The smallest bet is " + M().minText + ".";
   for(const k in ERR) if(s.includes(k.slice(2))) return ERR[k];
   if(/insufficient funds/i.test(s)) return "Not enough ETH for gas.";
   return "The wallet refused: " + esc((e && e.message || "unknown error").slice(0, 120));
 }
-async function send(to, data, label){
+async function send(to, data, label, value = 0n){
   await ensureEthereum();
   const chain = await window.ethereum.request({method:"eth_chainId"});
   if(parseInt(chain,16) !== CFG.CHAIN_ID) throw {message:"Switch your wallet to Ethereum."};
-  const hash = await window.ethereum.request({method:"eth_sendTransaction",params:[{from:D.me,to,data}]});
+  const tx = {from:D.me, to, data};
+  if(value > 0n) tx.value = "0x" + value.toString(16);
+  const hash = await window.ethereum.request({method:"eth_sendTransaction",params:[tx]});
   const link = ' <a href="https://etherscan.io/tx/'+hash+'" target="_blank" rel="noopener">See it on Etherscan</a>.';
   say(esc(label) + " sent." + link);
   for(let i=0;i<60;i++){
@@ -551,7 +587,7 @@ async function send(to, data, label){
 }
 async function withAllowance(amount){
   if(D.allow >= amount) return;
-  await send(CFG.TOKEN, SEL.approve + padAddr(CFG.DUEL) + pad32(amount), "Approval of " + fmtDraw(amount) + " DRAW");
+  await send(CFG.TOKEN, SEL.approve + padAddr(CFG.DUEL) + pad32(amount), "Approval of " + fmtDraw(amount) + " DRAW"); // DRAW table only
   D.allow = amount;
 }
 async function act(fn){
@@ -562,11 +598,18 @@ async function act(fn){
   D.busy = false; await refresh(); renderForm();
 }
 $("#post").addEventListener("click", () => act(async () => {
-  const bet = parseDraw($("#amt").value);
-  if(bet === null || bet < BigInt(CFG.MIN_BET) * ONE) throw {message:"The smallest bet is 10 DRAW."};
+  const m = M(), bet = parseDraw($("#amt").value);
+  if(bet === null || bet < m.min) throw {message:"The smallest bet is " + m.minText + "."};
+  const what = fmtAmt(bet) + " " + m.unit;
+  if(CUR === "eth"){
+    // ETH: the bet is the transaction's value, no approval
+    if(PRIV_HASH) await send(CFG.ETH_DUEL, SEL.createPrivateEth + PRIV_HASH + TAG_HEX, "Private challenge for " + what, bet);
+    else await send(CFG.ETH_DUEL, SEL.createEth + TAG_HEX, "Challenge for " + what, bet);
+    return;
+  }
   await withAllowance(bet);
-  if(PRIV_HASH) await send(CFG.DUEL, SEL.createPrivate + pad32(bet) + PRIV_HASH + TAG_HEX, "Private challenge for " + fmtDraw(bet) + " DRAW");
-  else await send(CFG.DUEL, SEL.create + pad32(bet) + TAG_HEX, "Challenge for " + fmtDraw(bet) + " DRAW");
+  if(PRIV_HASH) await send(CFG.DUEL, SEL.createPrivate + pad32(bet) + PRIV_HASH + TAG_HEX, "Private challenge for " + what);
+  else await send(CFG.DUEL, SEL.create + pad32(bet) + TAG_HEX, "Challenge for " + what);
 }));
 document.addEventListener("click", e => {
   const b = e.target.closest("button[data-act]"); if(!b) return;
@@ -575,16 +618,20 @@ document.addEventListener("click", e => {
   if(kind === "take") act(async () => {
     const d = D.open.find(x => x.id === id) || (D.takeDuel && D.takeDuel.id === id && D.takeDuel.status === "open" ? D.takeDuel : null);
     if(!d) throw {message:"That challenge is no longer open."};
-    if(d.amount > D.bal) throw {message:"You need " + fmtDraw(d.amount) + " DRAW to take this challenge."};
-    await withAllowance(d.amount);
-    if(PRIV_CODE && id === TAKE_ID) await send(CFG.DUEL, SEL.acceptWithCode + pad32(id) + PRIV_CODE + TAG_HEX, "Taking the private challenge");
-    else await send(CFG.DUEL, SEL.accept + pad32(id) + TAG_HEX, "Taking the challenge");
+    if(d.amount > D.bal) throw {message:"You need " + fmtAmt(d.amount) + " " + M().unit + " to take this challenge."};
+    const eth = CUR === "eth", to = duelAddr(), value = eth ? d.amount : 0n;
+    if(!eth) await withAllowance(d.amount);
+    if(PRIV_CODE && id === TAKE_ID) await send(to, SEL.acceptWithCode + pad32(id) + PRIV_CODE + TAG_HEX, "Taking the private challenge", value);
+    else await send(to, SEL.accept + pad32(id) + TAG_HEX, "Taking the challenge", value);
   });
-  if(kind === "cancel") act(() => send(CFG.DUEL, SEL.cancel + pad32(id), "Cancel"));
-  if(kind === "settle") act(() => send(CFG.DUEL, SEL.settle + pad32(id), "Settle"));
+  if(kind === "cancel") act(() => send(duelAddr(), SEL.cancel + pad32(id), "Cancel"));
+  if(kind === "settle") act(() => send(duelAddr(), SEL.settle + pad32(id), "Settle"));
 });
 $("#amt").addEventListener("input", renderForm);
-$("#max").addEventListener("click", () => { if(D.bal > 0n){ $("#amt").value = exactDraw(D.bal); renderForm(); } });
+$("#max").addEventListener("click", () => {
+  const max = CUR === "eth" ? D.bal - parseDraw(CFG.ETH_GAS_RESERVE) : D.bal; // ETH: keep some for gas
+  if(max > 0n){ $("#amt").value = exactDraw(max); renderForm(); }
+});
 for(const b of [$("#connect"),$("#connect-m")]) b.addEventListener("click", connectWallet);
 
 /* ============================================================
@@ -695,8 +742,8 @@ function frame(now){
     const wx = aWins ? xa : xb, lx = aWins ? xb : xa;
     const tag = (str, x, y, colr) => { const w = ctx.measureText(str).width + 12;
       ctx.fillStyle = "rgba(239,228,203,.92)"; ctx.fillRect(x - w/2, y - 15, w, 20); ctx.fillStyle = colr; ctx.fillText(str, x, y); };
-    tag("+" + fmtDraw(winOf(SHOW.bet)) + " DRAW", wx, top - 26, "#1C1611");
-    tag(fmtDraw(burnOf(SHOW.bet)) + " burned", lx, GROUND - PX*6 - 8, "#B23A1B");
+    tag("+" + fmtAmt(winOf(SHOW.bet)) + " " + M().unit, wx, top - 26, "#1C1611");
+    tag(fmtAmt(burnOf(SHOW.bet)) + (CUR === "eth" ? " to the treasury" : " burned"), lx, GROUND - PX*6 - 8, "#B23A1B");
   }
 }
 function cap(html){ $("#cap").innerHTML = html; }
@@ -705,8 +752,9 @@ function showDuel(d){
   const side = won ? (won === d.creator ? "a" : "b") : null;
   SHOW = newShow(d.creator, d.accepter, side, d.amount, { a: short(d.creator), b: short(d.accepter) });
   D.seen.add(String(d.id));
-  if(side) cap(`<b class="mono">${short(won)}</b> draws first and takes ${fmtDraw(winOf(d.amount))} DRAW. ${fmtDraw(burnOf(d.amount))} DRAW burns.`);
-  else cap(`<b class="mono">${short(d.creator)}</b> and <b class="mono">${short(d.accepter)}</b> face off for ${fmtDraw(d.amount)} DRAW each. The blocks decide.`);
+  const unit = M().unit;
+  if(side) cap(`<b class="mono">${short(won)}</b> draws first and takes ${fmtAmt(winOf(d.amount))} ${unit}. ${fmtAmt(burnOf(d.amount))} ${unit} ${M().feeWord}.`);
+  else cap(`<b class="mono">${short(d.creator)}</b> and <b class="mono">${short(d.accepter)}</b> face off for ${fmtAmt(d.amount)} ${unit} each. The blocks decide.`);
 }
 // live: play every newly decided duel once; otherwise hold the first standoff, else replay the last result
 function watchForShow(){
@@ -727,16 +775,36 @@ function idleShow(){
 }
 
 /* ---- boot ---- */
+if(CUR === "eth") $("#amt").value = "0.05";
 if(Q.get("amount") && parseDraw(Q.get("amount")) !== null) $("#amt").value = Q.get("amount");
 $("#priv-note").hidden = !PRIV_HASH;
-resize(); requestAnimationFrame(frame); renderForm(); renderTake();
-if(LIVE){
-  const fc = $("#foot-ca"); fc.hidden = false;
-  fc.innerHTML = 'Duel contract <a href="https://etherscan.io/address/'+CFG.DUEL+'" target="_blank" rel="noopener">'+CFG.DUEL+'</a>';
-  refresh(); setInterval(refresh, 4000);
-} else {
-  idleShow(); setInterval(idleShow, 6000);
+// the texts that differ between the two tables, and the footer's contract
+function applyMode(){
+  const m = M();
+  document.querySelector(".cur-switch").hidden = !CFG.ETH_DUEL; // the ETH table shows once its contract is set
+  for(const b of document.querySelectorAll(".cur-switch .btn")){ const on = b.dataset.cur === CUR; b.classList.toggle("primary", on); b.setAttribute("aria-pressed", String(on)); }
+  $("#amt-label").textContent = "Your bet in " + m.unit;
+  $("#c-fee-l").textContent = m.feeCalc;
+  $("#th-fee").textContent = m.feeCol;
+  $("#r-min").textContent = m.minText;
+  $("#r-payout").textContent = m.payout;
+  $("#rules-lede").textContent = m.lede;
+  $("#r-hand").hidden = CUR === "eth";
+  $("#r-approve").hidden = CUR === "eth";
+  const fc = $("#foot-ca"); fc.hidden = !live();
+  if(live()) fc.innerHTML = 'Duel contract <a href="https://etherscan.io/address/'+duelAddr()+'" target="_blank" rel="noopener">'+duelAddr()+'</a>';
 }
+document.querySelector(".cur-switch").addEventListener("click", e => {
+  const b = e.target.closest("button[data-cur]"); if(!b || b.dataset.cur === CUR || D.busy) return;
+  CUR = b.dataset.cur;
+  Object.assign(D, { bal:0n, allow:0n, handEth:0n, ready:false, open:[], live:[], done:[], mine:[], takeDuel:null, outcomes:new Map(), stats:{settled:0n, burned:0n, volume:0n} });
+  if(!$("#amt").value || parseDraw($("#amt").value) === null || parseDraw($("#amt").value) < M().min || CUR === "eth") $("#amt").value = CUR === "eth" ? "0.05" : "100";
+  applyMode(); render(); if(live()) refresh(); else idleShow();
+});
+resize(); requestAnimationFrame(frame); applyMode(); renderForm(); renderTake();
+refresh(); setInterval(() => { if(live()) refresh(); }, 4000);
+setInterval(() => { if(!live()) idleShow(); }, 6000);
+if(!live()) idleShow();
 </script>
 </body>
 </html>
